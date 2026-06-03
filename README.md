@@ -4,6 +4,8 @@
 **Prizes targeted:** June Progress Prize ($20,000) — methodology/tooling  
 **Status:** Two **candidate observations under self-audit** — not confirmed (Jun 4, 2026)
 
+> New to this project? Read **[GUIDE.md](GUIDE.md)** — a plain-language walkthrough of what this is, how it works, what went right/wrong, and how to judge any finding. No background assumed.
+
 ---
 
 ## ⚠️ Honest assessment (read first)
