@@ -20,7 +20,7 @@ import sys, json, glob
 import numpy as np
 import cv2, zarr
 from pathlib import Path
-from scipy.ndimage import gaussian_filter, label
+from scipy.ndimage import gaussian_filter, label, find_objects
 
 ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.home()/"scroll_prize/data/m7_triage"
 OUT  = ROOT / "results"; OUT.mkdir(parents=True, exist_ok=True)
@@ -46,12 +46,14 @@ def fit_center(arr, T=20, zsample=40):
     resid = float(np.median(np.hypot(np.array(cys)-cy, np.array(cxs)-cx)))
     return cy, cx, resid, len(cys)
 
-def unroll_at(arr_z, cy, cx, r, n_ang):
-    NY, NX = arr_z.shape[1], arr_z.shape[2]
-    ang = np.linspace(0, 2*np.pi, n_ang, endpoint=False)
+N_ANG = 1440          # fixed angular sampling so all radii align column-for-column
+
+def unroll_at(data, cy, cx, r):
+    NY, NX = data.shape[1], data.shape[2]
+    ang = np.linspace(0, 2*np.pi, N_ANG, endpoint=False)
     ys = np.clip(cy + r*np.sin(ang), 0, NY-1).astype(int)
     xs = np.clip(cx + r*np.cos(ang), 0, NX-1).astype(int)
-    return arr_z[:, ys, xs].astype(np.uint8)
+    return data[:, ys, xs].astype(np.uint8)
 
 def gate(strip_cols, cov_at):
     """positive-control gate on a candidate: peak at center radius, sharp falloff."""
@@ -68,36 +70,38 @@ def scan_scroll(name, zpath):
     cy, cx, resid, nz_used = fc
     Rmax = 0.48*min(NY, NX)
     data = arr[:][:]                       # level-3 fits in memory
-    step = 3
     r_lo, r_hi = int(0.18*Rmax), int(0.72*Rmax)
-    radii = list(range(r_lo, r_hi, 6))
-    # per-radius ink coverage to find the densest shell
+    radii = list(range(r_lo, r_hi, 6))     # 6px steps -> matches calibrated gradient spacing
+    # precompute each radius's enhanced strip ONCE (columns align across radii)
+    E = {r: pipe(unroll_at(data, cy, cx, r)) for r in radii if r > 5}
+    radii = [r for r in radii if r in E]
     best = None
-    for r in radii:
-        n_ang = int(2*np.pi*r)
-        if n_ang < 60: continue
-        u = unroll_at(data, cy, cx, r, n_ang)
-        e = pipe(u); thr = (e < 120).astype(np.uint8)
-        lab, n = label(thr)
+    K = 10                                  # cap components checked per radius (largest first)
+    for i in range(2, len(radii)-2):        # need +/-2 neighbours for the gradient
+        r = radii[i]; e = E[r]
+        lab, n = label((e < 120).astype(np.uint8))
+        sizes  = np.bincount(lab.ravel())   # O(image): size of every component at once
+        slices = find_objects(lab)          # O(image): bbox of every component at once
+        comps = []
         for c in range(1, n+1):
-            m = lab == c; pix = int(m.sum())
+            pix = int(sizes[c])
             if pix < 150 or pix > 12000: continue
-            rows = np.where(m.any(axis=1))[0]; cols = np.where(m.any(axis=0))[0]
-            a0, a1 = int(cols.min()), int(cols.max())
-            if (a1-a0) > 0.5*n_ang: continue        # spans too much arc -> wall
-            # 5-radius gradient gate at this candidate's arc window
-            cov = []
-            for rr in (r-2*step, r-step, r, r+step, r+2*step):
-                uu = unroll_at(data, cy, cx, rr, n_ang)
-                ee = pipe(uu)[:, a0:a1+1]
-                cov.append(float((ee < 120).mean()))
+            sl = slices[c-1]
+            if sl is None: continue
+            a0, a1 = int(sl[1].start), int(sl[1].stop-1)
+            if (a1-a0) > 0.5*N_ANG: continue        # spans too much arc -> wall
+            comps.append((pix, a0, a1))
+        comps.sort(reverse=True)
+        for pix, a0, a1 in comps[:K]:
+            # 5-radius gradient gate using precomputed neighbour strips, same columns
+            cov = [float((E[radii[j]][:, a0:a1+1] < 120).mean())
+                   for j in (i-2, i-1, i, i+1, i+2)]
             if gate(None, cov):
-                # angle-shuffle control on this window
-                win = u[:, a0:a1+1]
+                win  = e[:, a0:a1+1]
                 perm = (np.arange(win.shape[1])*7+3) % win.shape[1]
-                blobs_real = len([1 for s in _sizes(pipe(win)) if 150<=s<=12000])
-                blobs_shuf = len([1 for s in _sizes(pipe(win[:, perm])) if 150<=s<=12000])
-                score = cov[2] * (cov[2]/(max(cov[0],1e-3)))   # peak * sharpness
+                blobs_real = len([1 for s in _sizes(win)        if 150<=s<=12000])
+                blobs_shuf = len([1 for s in _sizes(win[:, perm]) if 150<=s<=12000])
+                score = cov[2] * (cov[2]/max(cov[0],1e-3))   # peak * sharpness
                 cand = {"r": r, "pct_radius": round(r/Rmax,3), "a0": a0, "a1": a1,
                         "pixels": pix, "gradient": [round(x,3) for x in cov],
                         "shuffle_drop": round(1-blobs_shuf/max(blobs_real,1),2),
@@ -112,7 +116,8 @@ def scan_scroll(name, zpath):
 
 def _sizes(inv):
     lab, n = label((inv < 120).astype(np.uint8))
-    return [int((lab==i).sum()) for i in range(1, n+1)]
+    if n == 0: return []
+    return np.bincount(lab.ravel())[1:].tolist()   # skip background; O(image)
 
 def main():
     scrolls = sorted([p for p in ROOT.iterdir() if p.is_dir() and p.name != "results"])

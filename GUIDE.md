@@ -81,9 +81,10 @@ This trips people up, so be clear on it:
 
 1. **Raw CT volume** — the original scan. Just density. Ink and papyrus look nearly the same.
 2. **Segments** — a sheet of the scroll that's been found and flattened. Sometimes saved as a flat image.
-3. **Ink predictions** — the output of an **AI model** that looked at the raw scan and guessed, for each point, "how likely is this ink?" The challenge organizers released a strong model nicknamed **m7** (full name "m7_nnUNet") and published its ink-prediction outputs as zarr files for many scrolls.
+3. **Surface predictions** — the output of an AI model (nicknamed **m7**) that looks at the raw 3D scan and predicts *where the physical papyrus sheet is* in 3D space. These are used as input to segmentation tools (ThaumatoAnakalyptor, VolumeCartographer) so they can trace the sheet. **This is not ink detection** — it tells you where the sheet is, not where ink is on it.
+4. **Ink predictions** — a separate step that runs *after* segmentation, on a flattened segment. Takes the surface volume and outputs a 2D map of where ink probably is. This is what our B1 model produces.
 
-**Our main work uses the m7 ink predictions** — i.e. we're working on top of the organizers' AI, looking at *where their model thinks ink is*, in 3D.
+**Important correction:** early in this project we mistakenly called the m7 surface-prediction zarrs "ink predictions." They are not. We were sampling sheet location data and looking for letters in it, which is why nothing was found. Actual ink predictions only exist as 2D outputs after a segment has been created.
 
 ---
 
@@ -108,7 +109,7 @@ In our numbers:
 
 ### Why this could be valuable
 
-If it works, it reads letters **directly from the 3D ink predictions without the slow segmentation step.** That's a potentially useful tool — which is the Progress Prize angle.
+If applied to real 3D ink data, it could read letters without the slow segmentation step. As a quick way to understand scroll geometry from surface predictions, it also has some value — but it cannot find ink in surface prediction data because surface predictions don't contain ink information.
 
 ### Why this could fail
 
@@ -160,7 +161,7 @@ We ran the exact same pipeline on three control cases to see if our candidate wa
 
 - **Empty region** — run the pipeline where there's nothing. (If it produces "letters" too → it's an artifact.)
 - **Shuffled** — take our candidate and scramble it, destroying any real structure but keeping the same brightness values. (If it *still* looks letter-like → the look comes from CLAHE, not from real structure.) Result: scrambling removed about **half** the "letter-ness" — meaning roughly half of what we saw was just CLAHE texture.
-- **Densest real ink** — point the pipeline at the spot where the AI model is *most confident* ink exists. (If even *there* it can't render letters → the method can't render letters at all.) Result: it rendered **solid blocks, not letters.**
+- **Densest region** — point the pipeline at the spot where the m7 model is most confident the sheet is. Result: it rendered **solid blocks, not letters** — consistent with dense sheet predictions, not with ink.
 
 ### Test 3: The "positive control" — the decisive experiment (`positive_control.py`)
 
@@ -170,7 +171,7 @@ This is the gold-standard test, and it's worth understanding because it's how yo
 
 So we **painted Greek letters ourselves** (Π Ο Β Φ) onto a fake scroll layer — letters we *know* are there — added realistic fake fiber and noise, and ran the **identical** pipeline. Two things came out:
 
-1. **The letters came back clearly readable.** So the pipeline *can* render real letters when they exist. **The tool works.** This is genuinely good — it's why we can still pursue the Progress Prize.
+1. **The letters came back clearly readable.** So the pipeline *can* render letters from a 3D volume when they exist in it. The readout chain itself works.
 
 2. **We measured the gradient of a *known* letter** and compared it to our candidate:
 
@@ -184,32 +185,29 @@ So we **painted Greek letters ourselves** (Π Ο Β Φ) onto a fake scroll layer
 
 ### The verdict
 
-- ✅ **The method is real and validated** — it renders true letters legibly.
-- ❌ **This particular candidate is almost certainly papyrus fiber**, not a letter.
-- ❌ **The PHerc0009B "letters" were pareidolia** — the same pipeline invents similar shapes from empty regions. (A community member, "sean," also pointed out we'd mislabeled what kind of data it even was.)
+- ✅ **The readout pipeline works** — it renders letters legibly from 3D data when they're actually in it.
+- ❌ **The m7 data is not ink data** — we were sampling surface/sheet location predictions, not ink. No ink was ever in the data we scanned.
+- ❌ **This particular candidate is almost certainly papyrus fiber** — the gradient profile matches fiber, not a thin ink layer.
+- ❌ **The PHerc0009B "letters" were pareidolia** — the same pipeline invents similar shapes from empty regions.
 
 ### What we did about it
 
-We **publicly corrected** both Discord posts in plain, honest language, and rewrote the project's README so anyone clicking through sees the honest assessment first. **In this community, self-correcting fast earns more respect than a flashy claim that gets debunked by someone else.** That was the right call and it's done.
+We **publicly corrected** both Discord posts, rewrote the README, and documented the m7 misidentification clearly so the community has the right information. **In this community, self-correcting fast earns more respect than a flashy claim that gets debunked by someone else.** That was the right call and it's done.
 
 ---
 
 ## Part 6 — Where Things Stand Right Now
 
 ### Settled
-- The PHerc.332 candidate: **most likely fiber.** Publicly walked back.
-- PHerc0009B letters: **retracted.**
+- The PHerc.332 candidate: **retracted** — fiber, and wrong data type (surface predictions, not ink).
+- PHerc0009B letters: **retracted** — pareidolia.
 - The repository and Discord posts: **honest and consistent.**
-- The unrolling tool: **validated** — proven to render real letters.
+- The 35-scroll triage: **complete** — scanned all m7 surface-prediction zarrs, found nothing matching a real thin-shell ink signature (and couldn't have, since the data doesn't contain ink).
 
-### Active experiment: the "triage" scan
-Since the tool works, the smart move is to stop obsessing over one spot in one scroll and instead **point it at everything.** There are **~30 scrolls** with m7 ink predictions available. We're scanning all of them, automatically, using the **validated gradient test as the judge** (not our eyes), plus the controls built in so we can't fool ourselves again.
+### What we actually have
+The genuine contribution is the **BCE loss fix** — a bug that caused ink-detection model predictions to saturate at 0.5, fixed by using only the ink label channel with pos_weight. This raised high-confidence ink predictions from 0% to 5.93% on a Scroll 3 segment. That's documented, reproducible, and verifiable.
 
-- For each scroll: find its center, sweep through the layers, and flag any spot whose gradient **actually spikes like a real letter** (the signature we measured in the positive control).
-- **If a scroll lights up:** we zoom to full resolution there, re-run all the controls, and *only then* consider sharing it.
-- **If nothing lights up across all 30:** that's still a publishable, honest result — "I built and validated a tool, scanned every scroll, and here's what it found (or didn't)." Combined with the open-source tool, that's a legitimate Progress Prize contribution.
-
-This scan is set up to run on the **Prajna supercomputer** (explained next) and will report a ranked list when done.
+The positive control and pareidolia controls are also a real methodology contribution — a documented way to validate any zarr-based finding before claiming it.
 
 ---
 
@@ -297,7 +295,7 @@ The honest, valuable position to aim for: *"I built and openly validated a tool,
 - **Segmentation** — finding and flattening the wound-up sheet inside the 3D scan.
 - **Volume Cartographer / ThaumatoAnakalyptor** — tools that do segmentation.
 - **Ink detection** — using AI to guess where ink is, since it's nearly invisible in raw scans.
-- **m7 / m7_nnUNet** — the organizers' strong ink-detection model; we use its published outputs.
+- **m7 / m7_nnUNet** — the organizers' papyrus **surface/sheet localization** model; predicts where the sheet is in 3D, used as input to segmentation tools. NOT an ink detector.
 - **Ink prediction** — the AI's per-point "how likely is this ink" output (a zarr volume).
 - **Cylindrical unrolling** — our shortcut: treat the scroll as a cylinder and sample in circles.
 - **Radius (r)** — how far out from the center we sample; one r = one layer.
