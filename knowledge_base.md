@@ -969,13 +969,12 @@ vesuvius_first_title_prize/scripts/
 
 4. **PHerc0009B retracted** — same CLAHE pipeline produces letter-like marks on empty regions. Pareidolia. sean(bruniss) on Discord flagged the segment was likely the ink-detection render not raw CT.
 
-**Survey: ~30 m7 ink-prediction zarrs across the open-data bucket.** All use same 3D format (z,y,x · 192³ chunks · uint8). 7 are L2-named, ~20 are L0-named (but all have internal levels 0-5; triage uses level 3 @ ~9.6µm/px).
+**Survey: ~35 m7 surface-prediction zarrs across the open-data bucket.** All use same 3D format (z,y,x · 192³ chunks · uint8). 7 are L2-named, ~20 are L0-named (but all have internal levels 0-5; triage uses level 3 @ ~9.6µm/px).
 
-**Triage experiment launched (2026-06-04):**
-- `scripts/triage_prep.sh` — downloads level-3 of all ~30 zarrs to `~/scroll_prize/data/m7_triage/` (running, pid 2980540)
-- `scripts/triage_scan.py` — scans each scroll with validated gradient gate + shuffle control + center-residual reporting
-- `scripts/triage.sbatch` — l40 batch job to run the scan once prep completes
-- Results: `~/scroll_prize/data/m7_triage/results/triage_report.json`
+**Triage results (job 127851, l40, 2026-06-04):**
+- 35 scrolls scanned, 8 gated candidates, 3 survived shuffle filter, 0 matched the calibrated thin-shell ink signature
+- Full ranked JSON: `~/scroll_prize/data/m7_triage/results/triage_report.json`
+- Best surviving candidates: PHercMANB (grad sharp, shuffle_drop=0.40 but resid=53.9), PHerc1451 (most cylindrical, resid=19.78 but gradient flat)
 
 **Figures (local: results/report/):**
 - `salvage_panel.png` — A=claim, B=empty, C=shuffled, D=densest ink; confirms candidate is not special
@@ -983,24 +982,78 @@ vesuvius_first_title_prize/scripts/
 
 ---
 
+### 2026-06-04 — CRITICAL: m7 is a SURFACE predictor, not an ink predictor
+
+**This is the most important correction in the project. Everything labelled "m7 ink predictions" was wrong.**
+
+#### What m7 actually is
+
+The zarr path is: `representations/predictions/surfaces/...surface-m7-L2-th0.2.zarr`
+
+**m7 is a papyrus sheet/surface localization model** — it predicts which voxels are part of the physical papyrus surface (medial surface of the sheet) in 3D space. This is the same type of model used as INPUT to ThaumatoAnakalyptor and VolumeCartographer for segmentation. It is NOT an ink detector.
+
+Evidence:
+- Path: `.../predictions/surfaces/` — categorized under surface predictions, not ink
+- Zarr name: `surface-m7` — "surface" is the prediction type
+- Documentation: "nnUNet models that aim to segment the medial surface of the papyrus sheet"
+- 14% nonzero at level-2 is consistent with a sheet surface (thin curved surface fills ~10-15% of bounding-box volume at coarse resolution); real volumetric ink density would be <1%
+- `th0.2` = threshold at 0.2 confidence — binary mask of predicted sheet voxels
+
+#### What this corrects
+
+| What we said | What is actually true |
+|---|---|
+| "m7_nnUNet 3D ink predictions" | m7 is a papyrus **surface/sheet location** predictor |
+| "ink fraction 14% nonzero" | 14% of voxels predicted to be part of the **papyrus sheet** |
+| "letter candidate at r=310" | concentration of **sheet predictions** at the inner shell boundary |
+| "triage scans ink predictions" | triage scans **surface predictions** — sheet geometry, not ink |
+| "35-scroll triage found no ink" | triage found no anomalous sheet geometry — correct but different claim |
+| "scanning m7 zarrs for letters" | cannot find ink/letters in surface predictions — wrong data type entirely |
+
+#### What this means for the codebase and submissions
+
+- **The BCE loss fix is unaffected** — it was on our own Segformer-B1 model trained on ESRF ink labels. Correct and independent.
+- **The positive control is sound as a method** but it proved "the pipeline can render letters from a 3D volume" — it never proved we were looking at ink data.
+- **The triage tool** needs reframing: it scans surface predictions for thin-shell geometry, which is useful as a quick scroll-geometry diagnostic but NOT as an ink/letter finder.
+- **The fork PR to villa** (`saurabh4269/villa`, branch `zarr-triage`) — README must be corrected before any PR to upstream is opened. Currently says "ink predictions" throughout.
+- **The Discord posts** already corrected for the letter overclaim; the "ink predictions" terminology error was not corrected and should be noted if re-engaging with the community.
+
+#### Where actual ink predictions live
+
+Real ink detection runs on **segmented surface volumes** (the output of ThaumatoAnakalyptor / VC), not on the raw 3D surface-prediction zarrs. The community's ink models (including our own B1) take a surface volume (already flattened) as input and output a 2D ink probability map. There is no publicly available 3D volumetric ink-prediction zarr in the open-data bucket — those only exist as 2D outputs after segmentation.
+
+#### What to actually scan for ink
+
+To scan for ink in a scroll without segmentation you would need either:
+1. A 2D ink model applied directly to raw CT cross-sections (not a surface volume) — low accuracy
+2. The surface predictions (m7) to find the sheet, then sample a thin band around it, then run ink detection — which is what the full pipeline already does
+3. Wait for the community to release 3D ink-prediction volumes (not currently available)
+
+---
+
 ## Open Questions (Updated 2026-06-04)
 
-### Priority 1 — Active (triage experiment running)
+### Priority 1 — Reframe after m7 misidentification
 
-1. **Does the validated cylindrical-unroll tool find a gradient-passing candidate in any of the ~30 m7 zarrs?**
-   - Triage job runs on `l40` partition once prep download completes (`logs/triage_prep.log`)
-   - Results land in `~/scroll_prize/data/m7_triage/results/triage_report.json`
-   - If any scroll gets a gated hit: promote to L0 (1.2µm/px) deep-dive + run controls before claiming anything
+1. **What is the cleanest contribution we can make to the Progress Prize given the corrected understanding?**
+   - BCE loss fix is real but is in our code, not villa's
+   - The triage tool can be reframed as a scroll-geometry / surface-shell diagnostic, not ink scanning
+   - Fork at `saurabh4269/villa` branch `zarr-triage` needs README corrected before any upstream PR
 
-2. **Does the positive-control gradient gate have the right threshold?**
-   - Gate requires: peak at candidate radius AND r±1step < 60%/50% of peak AND coverage > 0.02
-   - Calibrated on synthetic letters — verify it also passes against actual known-ink regions (First Letters Scroll 1 published fragments with confirmed ink labels)
+2. **Is there any publicly available 3D INK prediction volume we can work with?**
+   - Community's ink outputs are 2D segment maps, not 3D volumes
+   - Raw CT + 2D ink model is possible but low accuracy without proper segmentation
+   - Check if First Letters winners released any 3D ink volumetric outputs
 
-### Priority 2 — Before any new claim
+### Priority 2 — If pursuing Progress Prize
 
-3. **Does any m7 zarr have a region of spatially dense, coherent ink predictions (not isolated blobs)?**
-   - The PHerc.332 densest region rendered as saturation blocks — no letter structure
-   - If another scroll's dense region also renders as blocks, the unroll tool needs a different ink regime (sparser, inner shell only)
+3. **Does the BCE loss fix have any applicable footprint in villa's official training code?**
+   - Investigation showed: villa uses `DC_and_BCE_loss` (nnUNet), `DiceLoss + SoftBCEWithLogitsLoss` — all handle label shapes correctly. Bug was specific to our ESRF 2-channel label setup.
+   - Best remaining contribution is the `pos_weight` documentation comment in `64x64_256stride_i3d.py` (already in fork)
+
+4. **Is cylindrical unrolling of surface predictions useful as a segmentation aid?**
+   - The triage tool correctly identifies thin-shell surface concentrations
+   - Could be pitched as "quick inner-shell localization before running ThaumatoAnakalyptor" — narrow but honest scope
 
 4. **Is the June 30 Progress Prize submission still viable with the triage tool as the contribution?**
    - Submission: `PROGRESS_PRIZE_SUBMISSION.md` (tracked)
