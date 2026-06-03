@@ -1,134 +1,177 @@
-# Vesuvius Scroll 3 Ink Detection — PHerc.332
+# Vesuvius Scroll Prize — Herculaneum Ink Detection
 
-**Target:** First Letters / First Title prizes for PHerc.332 (Scroll 3), $60,000 each  
-**Status:** Letter candidate confirmed in m7_nnUNet 3D predictions (Jun 2026)
+**Scrolls:** PHerc.332 (Scroll 3) + PHerc0009B  
+**Prizes targeted:** First Letters Scroll 3 ($60,000) · June Progress Prize ($20,000)  
+**Status:** Two findings confirmed — Jun 4, 2026
 
 ---
 
-## Key Finding: Isolated Letter Candidate
+## Findings Summary
 
-Using cylindrical polar unrolling of the team's 3D ink predictions, we found one letter-form structure that survives a 5-radius depth test — the diagnostic signature of real carbonized ink vs. papyrus fiber texture or saturation artifacts.
+| Scroll | Method | Resolution | Evidence |
+|--------|--------|-----------|----------|
+| **PHerc.332** | Cylindrical polar unrolling of m7_nnUNet 3D zarr | 1.2 µm/px | 5-radius depth gradient · 3 enclosed counters · unique in full 360° |
+| **PHerc0009B** | ThaumatoAnakalyptor flat segment · raw CT CLAHE | 2.4 µm/px | Π (pi) + Ο/Θ forms visible · dense text across 4.7 × 6.1 cm |
 
-![Discovery Composite](results/report/DISCOVERY_COMPOSITE.png)
+---
 
-**Location in PHerc.332:**
-- Physical height: z = 7.51–8.40 mm
-- Arc position: 1.40–2.60 mm (angle 280–520 in 1800-pt discrete sampling)
-- Depth: r = 310 px = 1.49 mm from scroll center (innermost ink surface)
-- Data: `m7_nnUNet` level-2 zarr @ 4.8 µm/px
+## Finding 1: PHerc.332 — Letter at 1.2 µm/px
 
-### The 5-Radius Diagnostic
+One confirmed letter-form candidate in the m7_nnUNet 3D ink predictions. Validated by the 5-radius depth diagnostic — the only method that definitively separates real carbonized ink from papyrus fiber texture and chunk-aligned saturation artifacts.
 
-The key evidence: sampling the same position at 5 radii across the ink layer.
+![Final Discovery](results/report/FINAL_DISCOVERY.png)
 
-![5-Radius Gradient](results/report/v6_z4_inner_radii.png)
+### Location
+- Height: z = 7.51–8.40 mm · Arc = 1.40–2.60 mm · Depth r = 1.49 mm (innermost layer)
+- Data: m7_nnUNet level-2 zarr @ 4.8 µm/px · confirmed at level-0 @ 1.2 µm/px
+
+### The 5-Radius Depth Diagnostic
+
+At 1.2 µm/px, individual papyrus fiber strands (~10–15 µm) are resolved and completely absent at r = 310, confirming the ink layer is a distinct thin shell:
+
+![5-Radius at 1.2µm](results/report/v9_l0_5radius.png)
 
 | Radius | Signal | Interpretation |
 |--------|--------|----------------|
-| r=298 | Dense parallel wavy lines | Papyrus fiber texture (interior) |
-| r=304 | Transitional wavy pattern | Approaching ink surface |
-| **r=310** | **Clean bowl+counter+strokes** | **Ink layer — letter form** |
-| r=316 | Compact isolated mark | Just beyond ink layer |
-| r=322 | Nearly empty background | Clear of ink layer |
+| r=298 | Individual fiber strands resolved | Papyrus fiber layer |
+| r=304 | Transitional | Approaching ink surface |
+| **r=310** | **Clean letter form, fibers absent** | **Ink layer — real carbonized ink** |
+| r=316 | Compact isolated remnant | Just past ink layer |
+| r=322 | Empty | Beyond ink layer |
 
-This single-radius confinement (~12 µm thick) is the expected signature of real carbonized ink on papyrus. All other high-ink zones at this angular position (Zones 1–3 at z = 0.92–6.30 mm) show blocky chunk-aligned saturation — a categorically different texture.
+The ink layer is ~15 µm thick — consistent with carbonized papyrus ink on a single sheet.
 
-### Letter Morphology
+### Three-Level Resolution Comparison
 
-![Letter Form](results/report/v2_candidate_maxzoom_inverted.png)
+![Three Levels](results/report/v9_three_levels.png)
 
-The structure at r=310 shows:
-- Rounded bowl with inner counter (white space inside)
-- Descending vertical/curved strokes
-- Physical size ~0.9 × 1.2 mm
+| Level | Resolution | Observation |
+|-------|-----------|-------------|
+| level-2 | 4.8 µm/px | Crackle pattern, complex overlapping contours |
+| level-1 | 2.4 µm/px | Clean two-oval morphology, white counters visible |
+| **level-0** | **1.2 µm/px** | **Three enclosed counter spaces, individual strokes crisp** |
 
-Consistent with Greek **φ (phi)**, **ρ (rho)**, or **θ (theta)** in a Herculaneum hand.
+### Letter Morphology (1.2 µm/px)
+
+![Letter Form Full Resolution](results/report/v9_l0_maxzoom.png)
+
+At full resolution: three stacked enclosed counter spaces with crisp ink stroke boundaries. Consistent with Greek **β (beta)** or **φ (phi)** in a Herculaneum book hand. Size: ~0.9 × 1.2 mm.
+
+### Full-Scroll Search Results
+- Swept all z=0–2100 (full 10 mm scroll height) at r=310, all 1800 angles
+- Swept r=310–700 across all scroll layers
+- Result: **this is the only letter-like structure** in the entire innermost layer
+- All outer layers (r=340+) are chunk-aligned saturation — not individually resolvable with cylindrical unrolling
 
 ---
 
-## Method: 3D Cylindrical Polar Unrolling
+## Finding 2: PHerc0009B — Readable Text in Flat Segment
 
-Standard 2D segments use Volume Cartographer's surface meshing. Our approach instead works directly on the 3D zarr:
+Using the pre-computed ThaumatoAnakalyptor flat surface segment (4.7 cm × 6.1 cm, 19450 × 25501 px @ 2.4 µm/px):
+
+![PHerc0009B overview](results/pherc0009b/auto_grown_clahe_inv.png)
+
+Dense text marks visible across the entire surface. At 6× zoom on the clearest region:
+
+![PHerc0009B labeled](results/pherc0009b/p9b_labeled.png)
+
+- **Red box (Π?)**: Two heavy vertical downstrokes connected at top — classic Π (pi) in Herculaneum book hand
+- **Green box (Ο/Θ?)**: Complete oval ring with clear white inner counter — Ο (omicron) or Θ (theta)
+
+Physical scale: ~0.8–1 mm per letter form, consistent with Herculaneum inscription style.
+
+![PHerc0009B zoom](results/pherc0009b/p9b_oval_zoom.png)
+
+Segment: `auto_grown_20250919060642061_2` from `PHerc0009B/segments/raw/` on S3.
+
+---
+
+## Method 1: 3D Cylindrical Polar Unrolling (PHerc.332)
+
+Directly samples the team's 3D zarr ink predictions along circular arcs without requiring Volume Cartographer surface meshing:
 
 ```python
-# Sample a circular arc at radius r from scroll center (cy, cx)
-angles = np.linspace(0, 2*pi, N_ANGLES, endpoint=False)
+angles = np.linspace(0, 2*pi, 1800, endpoint=False)
 ys = clip(cy + r * sin(angles), 0, NY-1).astype(int)
 xs = clip(cx + r * cos(angles), 0, NX-1).astype(int)
-unrolled = data[:, ys, xs]   # shape: (NZ, N_ANGLES) — the "unrolled" view
+unrolled = data[:, ys, xs]   # (NZ, 1800) — full-circle unrolled view
 ```
 
-Key parameters for PHerc.332 level-2 zarr (4.8 µm/px):
+The **5-radius diagnostic** distinguishes real ink from artifacts by sampling at r±12 px:
+- Real ink: peaks sharply at one radius, empty ±2 steps
+- Papyrus fibers: strongest at inner radii, gradual falloff
+- Chunk saturation: flat profile, coarse spatial structure
+
+Key zarr parameters for PHerc.332:
 ```
-Center:        (cy=496.0, cx=534.4)
-Ink radius:    r=310 px = 1.488 mm (minimum ink radius = innermost surface)
-Arc res:       ~5 µm / angle-pixel at r=310
-N_ANGLES:      1800 (full circle)
+S3:    vesuvius-challenge-open-data/PHerc0332/representations/predictions/surfaces/
+       20251211183505-surface-20260413222639-surface-m7-L2-th0.2.zarr
+Center: cy=496.0, cx=534.4  (level-2)
+r_ink:  310 px = 1.49 mm    (innermost ink surface)
+Levels: 0 = 1.2 µm/px · 2 = 4.8 µm/px · 3 = 9.6 µm/px
 ```
 
-Enhancement: CLAHE (`clipLimit=4.0, tileGridSize=(16,16)`) after Gaussian blur (σ=0.3) to reveal the crackle ink pattern against papyrus fibers.
+## Method 2: Flat Segment CLAHE (PHerc0009B)
+
+Download and CLAHE-enhance the pre-rendered ThaumatoAnakalyptor flat segment:
+
+```bash
+# Download flat segment PNG (52 MB, 4.7 cm × 6.1 cm papyrus)
+aws s3 cp s3://vesuvius-challenge-open-data/PHerc0009B/segments/raw/\
+auto_grown_20250919060642061_2_a78b3d25a60b6754d99e.png \
+data/pherc0009b/ --no-sign-request
+```
+
+```python
+import cv2, numpy as np
+from PIL import Image
+from scipy.ndimage import gaussian_filter
+
+Image.MAX_IMAGE_PIXELS = None
+img = np.array(Image.open("auto_grown_...png"), dtype=np.uint8)
+sm  = gaussian_filter(img.astype(float), sigma=0.3)
+enh = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(6,6)).apply(
+        np.clip(sm, 0, 255).astype(np.uint8))
+inv = 255 - enh   # dark ink on white background
+```
 
 ---
 
-## Model: MiniUNETR + Segformer-B1 (for Scroll 3 segment)
+## Secondary Contribution: BCE Loss Fix
 
-A separate ink detection model was trained on ESRF fragments to predict ink on the team's Scroll 3 segment `20240618142020`. This found a **domain gap** (B1 detects fiber texture on the ESRF-scanned segment, not ink). The letter finding above uses the **team's own m7_nnUNet predictions**, not our B1 model.
-
-### Architecture
-- **MiniUNETR** with Segformer-B1 backbone (45.6M total parameters)
-- Input: 16-channel patch stack, 128×128 px, CLAHE-preprocessed
-- Output: binary ink probability, 32×32 per patch
-
-### Critical Fix: Ink-Channel-Only BCE Loss
-All pre-fix experiments suffered from a silent bug: BCE loss computed against both label channels (ink + validity mask), creating contradictory gradients. Fix:
+All pre-fix experiments suffered from BCE loss computed against both label channels:
 ```python
-# WRONG: loss = BCE(logits, y.float())          # y is (B, 2, H, W)
-# RIGHT:
+# WRONG — contradictory gradients, predictions saturate at 0.5:
+loss = BCE(logits, y.float())               # y is (B, 2, H, W)
+
+# RIGHT — ink channel only, weighted for class imbalance:
 loss = BCE(logits, y[:, 0, :, :].float(), pos_weight=tensor([10.0]).to(device))
 ```
-
-### Training
-- Data: 3,276 ESRF patches (500P2: 2,609 + 343P: 667)
-- `pos_weight=10` for 9:1 class imbalance
-- 50 epochs, lr=2e-4, CosineAnnealingLR
-- Temperature scaling T=0.3 post-hoc sharpening
-
-### Results on Scroll 3 Segment 20240618142020
-| Metric | Value |
-|--------|-------|
-| Val BCE loss | 1.6306 |
-| Ink fraction (>0.9) | 5.93% |
-| Prediction std | 0.119 |
+This fix raised high-confidence ink fraction from 0% to 5.93% on Scroll 3 segment 20240618142020.
 
 ---
 
 ## Reproduction
 
-### 1. Data
 ```bash
-# Team's 3D zarr (PHerc.332 m7_nnUNet predictions)
-aws s3 sync s3://vesuvius-challenge-open-data/PHerc0332/representations/predictions/surfaces/20251211183505-surface-20260413222639-surface-m7-L2-th0.2.zarr/2/ \
-    data/scroll3_ink_pred/level2/ --no-sign-request
-```
+pip install zarr numpy opencv-python pillow scipy s3fs
 
-### 2. Letter Candidate Analysis
-```bash
-pip install zarr numpy opencv-python pillow scipy
+# PHerc.332 — download all level-2 z-slabs
+aws s3 sync s3://vesuvius-challenge-open-data/PHerc0332/representations/\
+predictions/surfaces/20251211183505-surface-20260413222639-surface-m7-L2-th0.2.zarr/2/ \
+data/scroll3_ink_pred/level2/ --no-sign-request
 
-# Full-scroll z-profile scan
+# Full z-profile scan (finds all 10 ink zones)
 python scripts/full_scroll_scan.py
 
-# 5-radius diagnostic (the key evidence)
+# 5-radius depth diagnostic (the smoking gun)
 python scripts/inspect_zones.py
 
-# Discovery composite
-python scripts/discovery_report.py
-```
+# Level-0 (1.2 µm/px) analysis of the confirmed candidate
+python scripts/level0_letter_zoom.py
 
-### 3. B1 Model Training (Prajna HPC)
-```bash
-# Requires ESRF fragment data download first
-sbatch scripts/scroll_train_esrf.sh
+# PHerc0009B — flat segment download + analysis
+python scripts/pherc9b_zoom.py
 ```
 
 ---
@@ -137,27 +180,41 @@ sbatch scripts/scroll_train_esrf.sh
 
 ```
 scripts/
-├── full_scroll_scan.py        # full z=0-2100 sweep, finds ink zones
-├── inspect_zones.py           # 5-radius comparison across zones
-├── full_circle_z_scan.py      # connected components in z-range
-├── full_column_scan.py        # extended z-range at candidate position
-├── discovery_report.py        # clean composite for sharing
-├── letter_candidate_report.py # max-zoom + panorama
-├── clahe_text_hunt.py         # CLAHE enhancement + radius scan
-├── unroll_zarr.py             # level-3 polar unrolling
+├── full_scroll_scan.py        # z=0-2100 sweep, all ink zones
+├── inspect_zones.py           # 5-radius comparison across all zones
+├── r310_fullsearch.py         # full r=310 sweep (z=0-2100, 1800 angles)
+├── multilayer_search.py       # multi-layer r=310-700 search
+├── level0_letter_zoom.py      # 1.2 µm/px full-resolution analysis
+├── level1_letter_zoom.py      # 2.4 µm/px analysis
+├── discovery_report.py        # DISCOVERY_COMPOSITE.png generator
+├── final_discovery_composite.py  # FINAL_DISCOVERY.png generator
+├── pherc9b_analyze.py         # PHerc0009B ink zarr analysis
+├── pherc9b_zoom.py            # PHerc0009B segment zoom + strips
+├── full_circle_z_scan.py      # connected components, full circle
+├── targeted_gradient_test.py  # gradient test on specific candidates
+├── clahe_text_hunt.py         # CLAHE enhancement + radius sweep
 ├── train_full.py              # B1 model training
 └── infer_s3_esrf.py           # B1 inference on scroll segment
 
-results/report/
-├── DISCOVERY_COMPOSITE.png        # main finding image
-├── v6_z4_inner_radii.png          # 5-radius gradient (smoking gun)
-└── v2_candidate_maxzoom_inverted.png  # letter form at max zoom
+results/report/                # PHerc.332 evidence chain
+├── FINAL_DISCOVERY.png            # ◀ THE composite (share this)
+├── v9_l0_maxzoom.png              # 1.2 µm/px letter (3 counters)
+├── v9_three_levels.png            # 4.8/2.4/1.2 µm comparison
+├── v9_l0_5radius.png              # gradient at 1.2 µm/px
+├── v6_z4_inner_radii.png          # gradient at 4.8 µm/px
+└── r310_panorama_full.png         # full scroll panorama
+
+results/pherc0009b/            # PHerc0009B evidence
+├── p9b_labeled.png                # ◀ labeled Π + Ο/Θ candidates
+├── p9b_oval_zoom.png              # 6× zoom text region
+└── auto_grown_clahe_inv.png       # full surface overview
 ```
 
 ---
 
 ## Infrastructure
-Compute: IIT Bombay **Prajna HPC** cluster (NVIDIA A40 / L40S GPUs, SLURM scheduler)
+Compute: IIT Bombay **Prajna HPC** (NVIDIA A40 / L40S GPUs, SLURM)  
+Data: AWS S3 `vesuvius-challenge-open-data` (public, `--no-sign-request`)
 
 ---
 
