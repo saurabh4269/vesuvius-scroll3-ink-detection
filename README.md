@@ -1,23 +1,40 @@
 # Vesuvius Scroll Prize — Herculaneum Ink Detection
 
 **Scrolls:** PHerc.332 (Scroll 3) + PHerc0009B  
-**Prizes targeted:** First Letters Scroll 3 ($60,000) · June Progress Prize ($20,000)  
-**Status:** Two findings confirmed — Jun 4, 2026
+**Prizes targeted:** June Progress Prize ($20,000) — methodology/tooling  
+**Status:** Two **candidate observations under self-audit** — not confirmed (Jun 4, 2026)
+
+---
+
+## ⚠️ Honest assessment (read first)
+
+I initially posted these as "confirmed." After self-auditing, I've walked that back. What is and isn't supported:
+
+**Solid:** the zarr is real and public, the code runs on it, the images are genuine pipeline outputs. There is a real, isolated, spatially-coherent ~1 mm structure at the PHerc.332 location below.
+
+**Not supported / withdrawn:**
+- The automated 5-radius gradient filter (`scripts/r310_fullsearch.py`) validates **0 candidates, including this one** — the "diagnostic signature of carbonized ink" claim was visual inspection, not the quantitative test.
+- **No positive control:** rendering the model's *most-confident* ink region with the identical pipeline produces saturation blocks, not letters (`results/report/salvage_panel.png`, panel D). There is no demonstration that this method renders real ink as legible letterforms anywhere.
+- Angle-shuffling the candidate window retains ~half its "letter-like" blobs → a substantial fraction is CLAHE texture, not structure.
+- The β/φ letter ID and "carbonized ink" are **interpretations**, not established. The structure reads as easily as a crack/fiber.
+- The PHerc0009B Π/Ο identifications are **retracted** (pareidolia — the same CLAHE pipeline manufactures letter-like marks on empty regions). PHerc0009B is also not a First-Letters-eligible scroll.
+
+Treat everything below as a **candidate and a method to be validated**, not a discovery.
 
 ---
 
 ## Findings Summary
 
-| Scroll | Method | Resolution | Evidence |
-|--------|--------|-----------|----------|
-| **PHerc.332** | Cylindrical polar unrolling of m7_nnUNet 3D zarr | 1.2 µm/px | 5-radius depth gradient · 3 enclosed counters · unique in full 360° |
-| **PHerc0009B** | ThaumatoAnakalyptor flat segment · raw CT CLAHE | 2.4 µm/px | Π (pi) + Ο/Θ forms visible · dense text across 4.7 × 6.1 cm |
+| Scroll | Method | Resolution | Status |
+|--------|--------|-----------|--------|
+| **PHerc.332** | Cylindrical polar unrolling of m7_nnUNet 3D zarr | 1.2 µm/px | Candidate structure — fails automated gradient filter, no positive control |
+| **PHerc0009B** | ThaumatoAnakalyptor flat segment · CLAHE | 2.4 µm/px | **Retracted** — Π/Ο IDs are pareidolia; provenance likely ink-detection not raw CT |
 
 ---
 
-## Finding 1: PHerc.332 — Letter at 1.2 µm/px
+## Candidate 1: PHerc.332 — isolated structure at 1.2 µm/px
 
-One confirmed letter-form candidate in the m7_nnUNet 3D ink predictions. Validated by the 5-radius depth diagnostic — the only method that definitively separates real carbonized ink from papyrus fiber texture and chunk-aligned saturation artifacts.
+One isolated, spatially-coherent letter-shaped structure in the m7_nnUNet 3D ink predictions. **Caveat (see top):** the 5-radius diagnostic below is a *visual* argument; the automated version of the same test (`r310_fullsearch.py`) does not validate this candidate, and there is no positive control showing the pipeline renders known ink as letters. Could be ink, a crack, or a fiber trace.
 
 ![Final Discovery](results/report/FINAL_DISCOVERY.png)
 
@@ -55,17 +72,18 @@ The ink layer is ~15 µm thick — consistent with carbonized papyrus ink on a s
 
 ![Letter Form Full Resolution](results/report/v9_l0_maxzoom.png)
 
-At full resolution: three stacked enclosed counter spaces with crisp ink stroke boundaries. Consistent with Greek **β (beta)** or **φ (phi)** in a Herculaneum book hand. Size: ~0.9 × 1.2 mm.
+At full resolution the form shows stacked enclosed spaces, ~0.9 × 1.2 mm. A β/φ reading was *proposed* but is **not established** — this is interpretation, and the same morphology is consistent with a crack or fiber bundle. Do not treat the letter ID as a result.
 
 ### Full-Scroll Search Results
 - Swept all z=0–2100 (full 10 mm scroll height) at r=310, all 1800 angles
-- Swept r=310–700 across all scroll layers
-- Result: **this is the only letter-like structure** in the entire innermost layer
-- All outer layers (r=340+) are chunk-aligned saturation — not individually resolvable with cylindrical unrolling
+- Result: the only isolated letter-*shaped* structure **in the thin accessible shell at r=310** — not "the only letter in the scroll." The outer layers (r=340+) are chunk-aligned saturation and unreadable with this method, so only a small fraction of the scroll was actually searched.
+- The automated gradient validator passed **0 of 10** candidates including this one (`results/r310_search/r310_candidates.txt`).
 
 ---
 
-## Finding 2: PHerc0009B — Readable Text in Flat Segment
+## Candidate 2: PHerc0009B — RETRACTED
+
+**This finding is withdrawn.** The Π/Ο identifications below were pareidolia: the same CLAHE pipeline produces equally letter-like marks on empty regions. The segment provenance is also likely the ink-detection render, not raw CT as originally stated. PHerc0009B is not a First-Letters-eligible scroll. Retained below only for transparency.
 
 Using the pre-computed ThaumatoAnakalyptor flat surface segment (4.7 cm × 6.1 cm, 19450 × 25501 px @ 2.4 µm/px):
 
