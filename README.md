@@ -14,12 +14,36 @@ I initially posted these as "confirmed." After self-auditing, I've walked that b
 
 **Not supported / withdrawn:**
 - The automated 5-radius gradient filter (`scripts/r310_fullsearch.py`) validates **0 candidates, including this one** — the "diagnostic signature of carbonized ink" claim was visual inspection, not the quantitative test.
-- **No positive control:** rendering the model's *most-confident* ink region with the identical pipeline produces saturation blocks, not letters (`results/report/salvage_panel.png`, panel D). There is no demonstration that this method renders real ink as legible letterforms anywhere.
+- A **positive control** (`scripts/positive_control.py`) now settles it. A synthetic letter painted on the shell produces a gradient that spikes sharply at r=310 (0.002 / 0.002 / **0.218** / 0.000 / 0.000). The candidate's *actual* gradient does the opposite — it peaks at r=298 and decays outward (**0.164** / 0.137 / 0.098 / 0.050 / 0.000). That is the signature of **papyrus fiber fringing outward, not an isolated ink shell.** Best current read: the candidate is fiber, not a letter.
 - Angle-shuffling the candidate window retains ~half its "letter-like" blobs → a substantial fraction is CLAHE texture, not structure.
-- The β/φ letter ID and "carbonized ink" are **interpretations**, not established. The structure reads as easily as a crack/fiber.
+- The β/φ letter ID and "carbonized ink" are **interpretations**, not established.
 - The PHerc0009B Π/Ο identifications are **retracted** (pareidolia — the same CLAHE pipeline manufactures letter-like marks on empty regions). PHerc0009B is also not a First-Letters-eligible scroll.
 
-Treat everything below as a **candidate and a method to be validated**, not a discovery.
+**What does hold up:** the unrolling pipeline is a *validated readout* — the same positive control shows it renders known wrapped Greek letters (Π Ο Β Φ) legibly through full 3D cylindrical sampling. The tool works; this particular candidate just isn't ink.
+
+Treat everything below as a **candidate (most likely fiber) and a validated method still searching for real ink**, not a discovery.
+
+---
+
+## Method validation (positive control)
+
+`scripts/positive_control.py` paints known letters (Π Ο Β Φ) onto a synthetic cylindrical shell at r=310 inside a volume with realistic fiber + noise sampled from the real zarr, then runs the **identical** unroll → CLAHE → invert pipeline.
+
+![Positive control](results/report/poscontrol_panel.png)
+
+*Left: ground truth. Center: recovered through 2D CLAHE readout. Right: recovered through full 3D cylindrical sampling.* Letters survive legibly → the readout is trustworthy.
+
+**5-radius gradient — real letter vs the candidate** (dark-pixel coverage, identical metric):
+
+| radius | synthetic real letter | PHerc.332 candidate |
+|--------|----------------------|---------------------|
+| r=298 | 0.002 | **0.164** (highest) |
+| r=304 | 0.002 | 0.137 |
+| **r=310** | **0.218** (sharp peak) | 0.098 |
+| r=316 | 0.000 | 0.050 |
+| r=322 | 0.000 | 0.000 |
+
+A real ink shell spikes at r=310 and is empty either side. The candidate monotonically decays from r=298 outward — the fiber-falloff signature. This is the clearest single piece of evidence that the candidate is papyrus fiber, not a letter.
 
 ---
 
