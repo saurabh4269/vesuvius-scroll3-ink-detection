@@ -3,17 +3,30 @@
 Validate B1 ink-detection model on villa's Scroll 1/2 labeled segments.
 Answers: does the model detect ink, or just papyrus fibers?
 
-Run on Prajna (scroll conda env, vesuvius package installed):
+Segment data comes from dl.ash2txt.org zarr (level 0 = Z×H×W).
+Labels come from villa/ink-detection/all_labels/{seg_id}_inklabels.png
+
+Run on Prajna (scroll conda env):
   python validate_b1_villa.py \
     --checkpoint ~/scroll_prize/vesuvius_first_title_prize/checkpoints/ft_esrf_b1_20260603_045037/best_epoch_046_val_loss_1.6306.pt \
     --config ~/scroll_prize/vesuvius_first_title_prize/configs/ft_esrf_b1.py \
-    --segment-id 20231007101615 \
+    --segment-id 20230827161847 \
     --scroll 1 \
     --label-dir ~/scroll_prize/villa/ink-detection/all_labels/ \
     --output-dir ~/scroll_prize/results/b1_validation/
 
-Validation segments (Scroll 1/2, confirmed ink labels in villa):
-  20231007101615, 20231012085431, 20231012173610, 20231016151000
+All available labeled segment IDs (45 total in all_labels/):
+  20230520175435, 20230522181603, 20230522215721, 20230530164535,
+  20230530172803, 20230530212931, 20230531121653, 20230531193658,
+  20230601193301, 20230611014200, 20230620230617, 20230620230619,
+  20230701020044, 20230702185753, 20230820203112, 20230826170124,
+  20230827161847, 20230901184804, 20230902141231, 20230903193206,
+  20230904020426, 20230904135535, 20230905134255, 20230909121925,
+  20230929220924, 20230929220926, 20231001164029, 20231004222109,
+  20231005123333, 20231005123336, 20231007101615, 20231012085431,
+  20231012173610, 20231012184420, 20231012184421, 20231012184423,
+  20231016151000, 20231022170900, 20231022170901, 20231031143850,
+  20231106155350, 20231106155351, 20231210121321, recto, verso
 """
 
 import sys
@@ -24,44 +37,27 @@ import numpy as np
 import torch
 import cv2
 from PIL import Image
-import tifffile
-import s3fs
+import zarr
 
 from phoenix.model.lightning_module import UNETR_SF_Module
 from phoenix.utility.configs import Config
 
 
-# S3 layer paths for Scroll 1 and 2 segments (Kaggle 2023 format)
-SCROLL_S3 = {
-    1: "vesuvius-challenge-open-data/Scroll1/PHercParis4.volpkg/paths",
-    2: "vesuvius-challenge-open-data/Scroll2/PHercParis3v1.volpkg/paths",
+# Scroll 1/2 segment zarr base URLs (dl.ash2txt.org, anon access)
+SEG_ZARR_BASE = {
+    1: "https://dl.ash2txt.org/other/dev/scrolls/1/segments/54keV_7.91um/{seg_id}.zarr/",
+    2: "https://dl.ash2txt.org/other/dev/scrolls/2/segments/54keV_7.91um/{seg_id}.zarr/",
 }
 
 
-def download_layers(seg_id, scroll_id, n_layers=65, cache_dir="/tmp/b1_val_layers"):
-    """Download TIFF layers for a Scroll 1/2 segment from public S3 bucket."""
-    fs = s3fs.S3FileSystem(anon=True)
-    base = f"{SCROLL_S3[scroll_id]}/{seg_id}/layers"
-    local_dir = Path(cache_dir) / str(seg_id)
-    local_dir.mkdir(parents=True, exist_ok=True)
-
-    layers = []
-    for i in range(n_layers):
-        local = local_dir / f"{i:02d}.tif"
-        if not local.exists():
-            s3_path = f"{base}/{i:02d}.tif"
-            try:
-                fs.get(s3_path, str(local))
-            except Exception:
-                break  # no more layers at this index
-        if local.exists():
-            layers.append(tifffile.imread(str(local)).astype(np.float32))
-
-    if not layers:
-        return None
-    volume = np.stack(layers, axis=0)
-    print(f"[VAL] Downloaded {len(layers)} layers → volume {volume.shape}", flush=True)
-    return volume
+def load_segment_zarr(seg_id, scroll_id, zarr_level=0):
+    """Load a Scroll 1/2 segment from dl.ash2txt.org zarr store. Returns (Z, H, W) float32."""
+    url = SEG_ZARR_BASE[scroll_id].format(seg_id=seg_id)
+    print(f"[VAL] Opening zarr: {url}", flush=True)
+    z = zarr.open(url, mode="r")
+    arr = np.array(z[str(zarr_level)]).astype(np.float32)
+    print(f"[VAL] Loaded level {zarr_level}: shape={arr.shape}  dtype=float32", flush=True)
+    return arr
 
 
 def apply_clahe(volume, clip_limit=2.0, tile_size=8):
@@ -69,7 +65,8 @@ def apply_clahe(volume, clip_limit=2.0, tile_size=8):
     out = volume.copy()
     for z in range(volume.shape[0]):
         layer = volume[z]
-        normed = ((layer - layer.min()) / (layer.max() - layer.min() + 1e-8) * 255).astype(np.uint8)
+        lo, hi = layer.min(), layer.max()
+        normed = ((layer - lo) / (hi - lo + 1e-8) * 255).astype(np.uint8)
         out[z] = clahe.apply(normed).astype(np.float32) / 255.0
     return out
 
@@ -106,20 +103,12 @@ def infer_volume(model, volume, device, patch_size=128, stride=64, in_chans=16):
 def load_label(label_dir, seg_id):
     """Load ink label PNG from villa's all_labels directory."""
     label_dir = Path(label_dir)
-    for name in [
-        f"{seg_id}_inklabels.png",
-        f"{seg_id}.png",
-        f"{seg_id}_labels.png",
-    ]:
+    for name in [f"{seg_id}_inklabels.png", f"{seg_id}_inklabels.tiff",
+                 f"{seg_id}.png", f"{seg_id}_labels.png"]:
         p = label_dir / name
         if p.exists():
             lbl = np.array(Image.open(p).convert("L"))
             return (lbl > 127).astype(np.uint8)
-    # try subdirectory layout
-    p = label_dir / str(seg_id) / f"{seg_id}_inklabels.png"
-    if p.exists():
-        lbl = np.array(Image.open(p).convert("L"))
-        return (lbl > 127).astype(np.uint8)
     return None
 
 
@@ -143,13 +132,13 @@ def compute_metrics(pred_prob, label, threshold):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--checkpoint", required=True, help="Path to B1 .pt checkpoint")
-    p.add_argument("--config", required=True, help="Path to ft_esrf_b1.py config")
-    p.add_argument("--segment-id", required=True, help="Segment ID, e.g. 20231007101615")
+    p.add_argument("--checkpoint", required=True)
+    p.add_argument("--config", required=True)
+    p.add_argument("--segment-id", required=True)
     p.add_argument("--scroll", type=int, default=1, choices=[1, 2])
-    p.add_argument("--label-dir", required=True, help="Path to villa/ink-detection/all_labels/")
+    p.add_argument("--label-dir", required=True)
     p.add_argument("--output-dir", default="~/scroll_prize/results/b1_validation")
-    p.add_argument("--n-layers", type=int, default=65)
+    p.add_argument("--zarr-level", type=int, default=0, help="Zarr pyramid level (0=finest)")
     p.add_argument("--patch-size", type=int, default=128)
     p.add_argument("--stride", type=int, default=64)
     args = p.parse_args()
@@ -171,70 +160,58 @@ def main():
     model.load_state_dict(state)
     model.to(device)
     model.eval()
-    print(f"[VAL] Loaded checkpoint: {Path(args.checkpoint).name}", flush=True)
+    print(f"[VAL] Loaded: {Path(args.checkpoint).name}", flush=True)
 
-    # Download segment layers from S3
-    print(f"[VAL] Fetching Scroll {args.scroll} segment {args.segment_id} from S3...", flush=True)
-    volume = download_layers(args.segment_id, args.scroll, args.n_layers)
-    if volume is None:
-        print("[VAL] ERROR: no layers downloaded — check S3 path and network", flush=True)
-        print(f"[VAL] Expected: {SCROLL_S3[args.scroll]}/{args.segment_id}/layers/00.tif", flush=True)
-        return 1
-
+    # Load segment from zarr
+    volume = load_segment_zarr(args.segment_id, args.scroll, args.zarr_level)
     volume = apply_clahe(volume)
 
     # Run inference
-    print(f"[VAL] Running inference (patch={args.patch_size}, stride={args.stride})...", flush=True)
+    in_chans = getattr(config, "in_chans", 16)
+    print(f"[VAL] Inference: patch={args.patch_size} stride={args.stride} in_chans={in_chans}", flush=True)
     pred = infer_volume(model, volume, device,
-                        patch_size=args.patch_size,
-                        stride=args.stride,
-                        in_chans=getattr(config, "in_chans", 16))
-    print(f"[VAL] Prediction: shape={pred.shape}  range=[{pred.min():.3f}, {pred.max():.3f}]", flush=True)
+                        patch_size=args.patch_size, stride=args.stride, in_chans=in_chans)
+    print(f"[VAL] Prediction: shape={pred.shape}  range=[{pred.min():.3f},{pred.max():.3f}]", flush=True)
 
-    # Load ground-truth ink label
+    # Load label
     label = load_label(args.label_dir, args.segment_id)
     if label is None:
-        print(f"[VAL] No label found for {args.segment_id} in {args.label_dir}", flush=True)
         np.save(str(out_dir / f"{args.segment_id}_pred.npy"), pred)
-        print("[VAL] Saved prediction (no metrics — label missing)", flush=True)
+        Image.fromarray((pred * 255).astype(np.uint8)).save(
+            str(out_dir / f"{args.segment_id}_pred.png"))
+        print(f"[VAL] No label found — saved prediction only to {out_dir}", flush=True)
         return 1
 
-    print(f"[VAL] Label: shape={label.shape}  ink fraction={label.mean():.4f}", flush=True)
+    print(f"[VAL] Label: shape={label.shape}  ink_frac={label.mean():.4f}", flush=True)
 
-    # Metrics at multiple thresholds
-    print("\n[VAL] === VALIDATION METRICS ===", flush=True)
+    # Metrics
+    print("\n[VAL] === METRICS ===", flush=True)
     print(f"{'Thresh':>6}  {'Precision':>9}  {'Recall':>6}  {'F1':>6}  {'Dice':>6}  {'PredFrac':>8}", flush=True)
     print("-" * 58, flush=True)
-    metrics_rows = []
+    rows = []
     for thresh in [0.3, 0.5, 0.7, 0.9]:
         m = compute_metrics(pred, label, thresh)
-        metrics_rows.append(m)
+        rows.append(m)
         print(f"{thresh:>6.1f}  {m['precision']:>9.4f}  {m['recall']:>6.4f}  "
               f"{m['f1']:>6.4f}  {m['dice']:>6.4f}  {m['pred_frac']:>8.4f}", flush=True)
 
-    best = max(metrics_rows, key=lambda m: m["f1"])
+    best = max(rows, key=lambda m: m["f1"])
     print(f"\n[VAL] Best F1={best['f1']:.4f} at threshold={best['threshold']}", flush=True)
-
     if best["f1"] < 0.05:
-        print("[VAL] VERDICT: model is NOT detecting ink on this segment (F1 < 0.05)", flush=True)
+        print("[VAL] VERDICT: model is NOT detecting ink on this segment", flush=True)
     elif best["f1"] < 0.20:
-        print("[VAL] VERDICT: model shows weak ink signal — may be detecting some fiber patterns", flush=True)
+        print("[VAL] VERDICT: weak ink signal — possible domain gap or fiber contamination", flush=True)
     else:
-        print("[VAL] VERDICT: model shows meaningful ink detection signal", flush=True)
+        print("[VAL] VERDICT: meaningful ink detection signal", flush=True)
 
-    # Save side-by-side visualization
+    # Save
     pred_u8 = (pred * 255).astype(np.uint8)
-    label_resized = cv2.resize(label.astype(np.float32),
-                               (pred.shape[1], pred.shape[0]),
-                               interpolation=cv2.INTER_NEAREST)
-    label_u8 = (label_resized * 255).astype(np.uint8)
-    side = np.hstack([label_u8, pred_u8])
-    vis_path = out_dir / f"{args.segment_id}_label_vs_pred.png"
-    Image.fromarray(side).save(str(vis_path))
-
+    label_r = cv2.resize(label.astype(np.float32), (pred.shape[1], pred.shape[0]),
+                         interpolation=cv2.INTER_NEAREST)
+    side = np.hstack([(label_r * 255).astype(np.uint8), pred_u8])
+    Image.fromarray(side).save(str(out_dir / f"{args.segment_id}_label_vs_pred.png"))
     np.save(str(out_dir / f"{args.segment_id}_pred.npy"), pred)
-    print(f"[VAL] Saved: {vis_path.name} (left=ground_truth, right=prediction)", flush=True)
-    print(f"[VAL] Output dir: {out_dir}", flush=True)
+    print(f"[VAL] Saved: {out_dir}  (left=ground_truth, right=prediction)", flush=True)
     return 0
 
 
