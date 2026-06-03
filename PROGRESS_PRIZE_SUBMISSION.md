@@ -71,14 +71,17 @@ Possible Greek letter: **φ (phi)**, **ρ (rho)**, or **θ (theta)**. Requires p
 
 ## Key Images
 
-**Discovery composite** (5-radius gradient + letter form + full-circle panorama):
-![composite](results/report/DISCOVERY_COMPOSITE.png)
+**Final discovery composite** (three-level comparison + 5-radius gradient + full-circle panorama):
+![composite](results/report/FINAL_DISCOVERY.png)
 
-**5-radius diagnostic — the smoking gun**:
-![gradient](results/report/v6_z4_inner_radii.png)
+**Three-level resolution comparison** (4.8 / 2.4 / 1.2 µm/px — clearer at each step):
+![three levels](results/report/v9_three_levels.png)
 
-**Letter form at maximum zoom** (inverted, dark ink on white):
-![letter](results/report/v2_candidate_maxzoom_inverted.png)
+**5-radius gradient at 1.2 µm/px** — individual papyrus fiber strands (~10-15µm) resolved:
+![gradient](results/report/v9_l0_5radius.png)
+
+**Letter form at 1.2 µm/px** — three enclosed counter spaces, consistent with β or φ:
+![letter](results/report/v9_l0_maxzoom.png)
 
 ---
 
