@@ -54,61 +54,92 @@ Ground-truth ink-labeled fragments from ESRF synchrotron scans. Used as training
 
 | Component | What it is | Value to us |
 |-----------|-----------|-------------|
-| `vesuvius/` package | Data loading: `Volume` class, catalog, zarr access | Replace raw zarr/s3fs with proper API |
-| `ink-detection/train_resnet3d.py` | ResNet3D-3D-decoder training with GroupDRO, proper augmentation | Better architecture than our custom `train_full.py` |
-| `ink-detection/all_labels/` | 15 Scroll 1/2 ink-labeled segments (2023 Kaggle) | More training data — combine with ESRF fragments |
-| `ink-detection/infer_resnet3d_vesuvius.py` | Inference using villa checkpoints on any zarr | Standard inference pipeline |
+| `vesuvius/` package | Data loading: `Volume` class, zarr access via `scrolls.yaml` | Standard API for scroll/segment access |
+| `ink-detection/train_resnet3d.py` | ResNet3D + 3D decoder, GroupDRO, Lightning | Better architecture than our `train_full.py` |
+| `ink-detection/all_labels/` | **45** labeled segment ink PNGs (Scroll 1/2) | More diverse training data than ESRF alone |
+| `ink-detection/infer_resnet3d_vesuvius.py` | Inference on any zarr segment — takes `--zarr_path` directly | Run on Scroll 3 without config gymnastics |
+| `wild14_deduped_64_pretrained2_...ckpt` | Pre-trained ResNet3D checkpoint (Scroll 1/2 trained) | Use as starting point or compare against our B1 |
 
 ### vesuvius package — how to use it
 
-```python
-# install (already done on Prajna's scroll env)
-# cd ~/scroll_prize/villa/vesuvius && pip install -e .
+Data is served from `dl.ash2txt.org`, **not** from `s3://vesuvius-challenge-open-data`. The `scrolls.yaml` config resolves scroll/segment IDs to their actual zarr URLs.
 
+```python
+# vesuvius already installed in scroll conda env on Prajna
 from vesuvius import Volume
 
-# load a segment by direct zarr path (config-based lookup not needed)
-v = Volume(type="zarr",
-           path="s3://vesuvius-challenge-open-data/PHerc0332/volumes/20231027191953.zarr",
-           anon=True)
-patch = v[z0:z1, y0:y1, x0:x1]   # returns numpy array
-
-# load a segment by scroll+segment ID (if in scrolls.yaml config)
+# load a Scroll 1 segment by ID (segment in scrolls.yaml)
 seg = Volume(type="segment", scroll_id=1, segment_id=20230827161847, anon=True)
+
+# load directly by zarr URL (for segments not in scrolls.yaml)
+import zarr
+z = zarr.open("https://dl.ash2txt.org/other/dev/scrolls/1/segments/54keV_7.91um/20230827161847.zarr/")
+volume = z['0'][:]   # level 0 → shape (65, H, W) for Scroll 1/2 segments
 ```
 
-**Note:** Scroll 3 segment 20240618142020 is NOT in the default scrolls.yaml config. Use direct zarr path for it.
+**Segment zarr URL pattern:**
+- Scroll 1: `https://dl.ash2txt.org/other/dev/scrolls/1/segments/54keV_7.91um/{seg_id}.zarr/`
+- Scroll 2: `https://dl.ash2txt.org/other/dev/scrolls/2/segments/54keV_7.91um/{seg_id}.zarr/`
+- Level `'0'` = finest resolution, shape `(65, H, W)`, Z=65 layers
+
+**Note:** Scroll 3 volume is at `https://dl.ash2txt.org/full-scrolls/Scroll3/PHerc332.volpkg/volumes_zarr_standardized/53keV_7.91um_Scroll3.zarr/`
 
 ### Labeled segments available for training
 
-`~/scroll_prize/villa/ink-detection/all_labels/` — 15 PNG ink label files for Scroll 1/2 segments. These are the 2023 Kaggle competition segments with confirmed ink annotations. Combined with our ESRF fragments, this is a significantly larger and more diverse training set than ESRF alone.
+`~/scroll_prize/villa/ink-detection/all_labels/` — **45** PNG ink label files (format: `{seg_id}_inklabels.png`). These are 2023 Kaggle competition Scroll 1/2 segments with confirmed ink annotations.
 
-Segments with labels (IDs from all_labels/):
-`20231007101615`, `20231012085431`, `20231012173610`, `20231012184420`, `20231012184421`, `20231012184423`, `20231016151000`, `20231022170900`, `20231022170901`, `20231031143850`, `20231106155350`, `20231106155351`, `20231210121321`, `recto`, `verso`
+All segment IDs:
+`20230520175435`, `20230522181603`, `20230522215721`, `20230530164535`, `20230530172803`,
+`20230530212931`, `20230531121653`, `20230531193658`, `20230601193301`, `20230611014200`,
+`20230620230617`, `20230620230619`, `20230701020044`, `20230702185753`, `20230813_real_1`,
+`20230820203112`, `20230826170124`, `20230827161847`, `20230901184804`, `20230902141231`,
+`20230903193206`, `20230904020426`, `20230904135535`, `20230905134255`, `20230909121925`,
+`20230929220924`, `20230929220926`, `20231001164029`, `20231004222109`, `20231005123333`,
+`20231005123336`, `20231007101615`, `20231012085431`, `20231012173610`, `20231012184420`,
+`20231012184421`, `20231012184423`, `20231016151000`, `20231022170900`, `20231022170901`,
+`20231031143850`, `20231106155350`, `20231106155351`, `20231210121321`, `recto`, `verso`
 
 ### villa training pipeline vs ours
 
 | Aspect | Our `train_full.py` | Villa `train_resnet3d.py` |
 |--------|--------------------|-----------------------------|
 | Architecture | Segformer-B1 (2D) | ResNet3D + 3D decoder |
-| Augmentation | Basic | Proper 3D augmentation (batchgeneratorsv2) |
-| Training strategy | Basic ERM | GroupDRO, per-sample loss, ensemble-ready |
-| Config | Hardcoded | YAML config files |
-| Data loading | Custom ESRF zarr | ZarrSegmentVolume + proper sliding window |
+| Loss | BCE (fixed: ink channel only) | 0.5×Dice + 0.5×BCE (SoftBCE, smooth_factor=0.25) |
+| Training strategy | Basic ERM | ERM or GroupDRO, per-sample loss |
+| Framework | Manual loop (no Lightning) | PyTorch Lightning |
+| Config | Python file | JSON metadata + YAML sweeps |
+| Data loading | Custom ESRF zarr | ZarrSegmentVolume + MONAI sliding window |
+| Pre-trained ckpt | No | Yes — `wild14_deduped_64_pretrained2_...ckpt` |
 
-**Recommended next step:** migrate to villa's pipeline using combined Scroll 1/2 labels + ESRF fragments.
+**Important:** villa uses PyTorch Lightning → use `l40` partition, NOT `a40` (Lightning hangs on A40 + CUDA 12.8).
+
+### villa inference (use this for Scroll 3)
+
+```bash
+# Run villa's own pre-trained checkpoint on any segment:
+cd ~/scroll_prize/villa/ink-detection/
+python infer_resnet3d_vesuvius.py \
+    --metadata_json metadata.json \
+    --ckpt_path wild14_deduped_64_pretrained2_20231210121321_0_fr_i3depoch=3-v2_256.ckpt \
+    --segment_id 20230827161847 \
+    --zarr_path "https://dl.ash2txt.org/other/dev/scrolls/1/segments/54keV_7.91um/20230827161847.zarr/" \
+    --output_path ~/scroll_prize/results/villa_pred.png \
+    --output_npy ~/scroll_prize/results/villa_pred.npy
+```
 
 ### Key villa paths on Prajna
 ```
 ~/scroll_prize/villa/
-├── vesuvius/                    ← Python package (pip install -e . in scroll env)
+├── vesuvius/                    ← Python package (already installed in scroll env)
 ├── ink-detection/
-│   ├── train_resnet3d.py        ← main training script
+│   ├── train_resnet3d.py        ← main training script (uses Lightning → l40 only)
 │   ├── train_resnet3d_lib/      ← config, data ops, model, orchestration
-│   ├── infer_resnet3d_vesuvius.py ← inference
-│   └── all_labels/              ← 15 Scroll 1/2 ink label PNGs
+│   ├── infer_resnet3d_vesuvius.py ← inference on any zarr
+│   ├── all_labels/              ← 45 Scroll 1/2 ink label PNGs
+│   ├── metadata.json            ← training config (segments, hyperparams)
+│   └── wild14_deduped_64_pretrained2_...ckpt  ← pre-trained checkpoint
 ├── thaumato-anakalyptor/        ← auto-segmentation (for future work)
-└── scrollprize.org/docs/        ← competition documentation (useful reference)
+└── scrollprize.org/docs/        ← competition documentation
 ```
 
 ---
