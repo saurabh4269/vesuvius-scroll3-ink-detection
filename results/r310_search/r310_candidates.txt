@@ -1,0 +1,15 @@
+Total raw: 10, deduped: 10, validated: 0
+
+=== GRADIENT-VALIDATED CANDIDATES ===
+
+=== ALL DEDUPED CANDIDATES (TOP 30) ===
+z=768 (3.69mm)  a=450  0.66×0.55mm  px=11517
+z=1152 (5.53mm)  a=450  0.66×0.66mm  px=10450
+z=384 (1.84mm)  a=1069  0.30×0.92mm  px=10386
+z=2004 (9.62mm)  a=962  1.38×0.46mm  px=9564
+z=2028 (9.73mm)  a=450  0.66×0.35mm  px=9000
+z=192 (0.92mm)  a=1057  0.42×0.92mm  px=8635
+z=669 (3.21mm)  a=480  0.35×0.47mm  px=3323
+z=1614 (7.75mm)  a=402  0.38×0.32mm  px=730
+z=1728 (8.29mm)  a=473  0.22×0.65mm  px=487
+z=963 (4.62mm)  a=894  0.23×0.46mm  px=443
