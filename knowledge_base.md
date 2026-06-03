@@ -46,7 +46,74 @@ Ground-truth ink-labeled fragments from ESRF synchrotron scans. Used as training
 
 ---
 
-## 3. Infrastructure (Prajna HPC)
+## 3. Villa (ScrollPrize/villa) — Foundation Codebase
+
+**villa is already cloned at `~/scroll_prize/villa/` on Prajna.** Use it as the foundation — don't build from scratch.
+
+### What villa gives us
+
+| Component | What it is | Value to us |
+|-----------|-----------|-------------|
+| `vesuvius/` package | Data loading: `Volume` class, catalog, zarr access | Replace raw zarr/s3fs with proper API |
+| `ink-detection/train_resnet3d.py` | ResNet3D-3D-decoder training with GroupDRO, proper augmentation | Better architecture than our custom `train_full.py` |
+| `ink-detection/all_labels/` | 15 Scroll 1/2 ink-labeled segments (2023 Kaggle) | More training data — combine with ESRF fragments |
+| `ink-detection/infer_resnet3d_vesuvius.py` | Inference using villa checkpoints on any zarr | Standard inference pipeline |
+
+### vesuvius package — how to use it
+
+```python
+# install (already done on Prajna's scroll env)
+# cd ~/scroll_prize/villa/vesuvius && pip install -e .
+
+from vesuvius import Volume
+
+# load a segment by direct zarr path (config-based lookup not needed)
+v = Volume(type="zarr",
+           path="s3://vesuvius-challenge-open-data/PHerc0332/volumes/20231027191953.zarr",
+           anon=True)
+patch = v[z0:z1, y0:y1, x0:x1]   # returns numpy array
+
+# load a segment by scroll+segment ID (if in scrolls.yaml config)
+seg = Volume(type="segment", scroll_id=1, segment_id=20230827161847, anon=True)
+```
+
+**Note:** Scroll 3 segment 20240618142020 is NOT in the default scrolls.yaml config. Use direct zarr path for it.
+
+### Labeled segments available for training
+
+`~/scroll_prize/villa/ink-detection/all_labels/` — 15 PNG ink label files for Scroll 1/2 segments. These are the 2023 Kaggle competition segments with confirmed ink annotations. Combined with our ESRF fragments, this is a significantly larger and more diverse training set than ESRF alone.
+
+Segments with labels (IDs from all_labels/):
+`20231007101615`, `20231012085431`, `20231012173610`, `20231012184420`, `20231012184421`, `20231012184423`, `20231016151000`, `20231022170900`, `20231022170901`, `20231031143850`, `20231106155350`, `20231106155351`, `20231210121321`, `recto`, `verso`
+
+### villa training pipeline vs ours
+
+| Aspect | Our `train_full.py` | Villa `train_resnet3d.py` |
+|--------|--------------------|-----------------------------|
+| Architecture | Segformer-B1 (2D) | ResNet3D + 3D decoder |
+| Augmentation | Basic | Proper 3D augmentation (batchgeneratorsv2) |
+| Training strategy | Basic ERM | GroupDRO, per-sample loss, ensemble-ready |
+| Config | Hardcoded | YAML config files |
+| Data loading | Custom ESRF zarr | ZarrSegmentVolume + proper sliding window |
+
+**Recommended next step:** migrate to villa's pipeline using combined Scroll 1/2 labels + ESRF fragments.
+
+### Key villa paths on Prajna
+```
+~/scroll_prize/villa/
+├── vesuvius/                    ← Python package (pip install -e . in scroll env)
+├── ink-detection/
+│   ├── train_resnet3d.py        ← main training script
+│   ├── train_resnet3d_lib/      ← config, data ops, model, orchestration
+│   ├── infer_resnet3d_vesuvius.py ← inference
+│   └── all_labels/              ← 15 Scroll 1/2 ink label PNGs
+├── thaumato-anakalyptor/        ← auto-segmentation (for future work)
+└── scrollprize.org/docs/        ← competition documentation (useful reference)
+```
+
+---
+
+## 4. Infrastructure (Prajna HPC)
 
 | Item | Value |
 |------|-------|
@@ -71,7 +138,7 @@ SSH: requires TOTP + password (2FA). ControlMaster: `~/.ssh/ctl/shiwani.mishra@p
 
 ---
 
-## 4. Our Model — BCE Fix and Results
+## 5. Our Model — BCE Fix and Results
 
 ### The bug (fixed 2026-05-31)
 BCE loss computed against both label channels on ESRF `(B, 2, H, W)` labels. Channel 1 is all-ones — training against it produces contradictory gradients, predictions saturate at 0.5.
@@ -100,7 +167,7 @@ Local prediction: `results/scroll3_prediction_B1_T0.3_BEST.npy`
 
 ---
 
-## 5. What We Tried and What Happened
+## 6. What We Tried and What Happened
 
 ### PHerc.332 — cylindrical unrolling of m7 zarr
 
@@ -132,7 +199,7 @@ Scanned all 35 scrolls with m7 surface-prediction zarrs at level-3 (~9.6 µm/px)
 
 ---
 
-## 6. Active Scripts
+## 7. Active Scripts
 
 | Script | Purpose | Status |
 |--------|---------|--------|
@@ -151,7 +218,7 @@ Scanned all 35 scrolls with m7 surface-prediction zarrs at level-3 (~9.6 µm/px)
 
 ---
 
-## 7. Progress Prize Submission
+## 8. Progress Prize Submission
 
 **Target:** Sestertius ($2,500) – Denarius ($10k)  
 **Primary contribution:** BCE loss fix (0% → 5.93% ink confidence)  
@@ -161,8 +228,28 @@ Scanned all 35 scrolls with m7 surface-prediction zarrs at level-3 (~9.6 µm/px)
 
 ---
 
-## 8. Open Questions
+## 9. Open Questions
 
-1. **Does the B1 model actually detect ink or just papyrus fibers?** The 32px dot grid output is suspicious. Needs validation against a segment with confirmed ink labels.
-2. **Are there any public 3D volumetric ink-prediction zarrs?** All community ink outputs are 2D post-segmentation. If any 3D ink volumes are ever released, the cylindrical unrolling methodology would be worth revisiting.
-3. **What is the correct scroll center for PHerc.332?** `cy=496.0, cx=534.4` at level-2 — was this fitted or estimated? High residual (9.53 px at level-3) suggests it's approximately right but not precise.
+### Priority 1 — Before next experiment
+
+1. **Does the B1 model actually detect ink or just papyrus fibers?**
+   The 32px dot grid on segment 20240618142020 is suspicious. Need to validate on a villa labeled segment (Scroll 1/2) where ground truth is known. If it fails there, the model is wrong; if it passes, Scroll 3 is just a harder case.
+
+2. **Can we retrain using villa's Scroll 1/2 labels + ESRF fragments combined?**
+   Villa has 15 labeled Scroll 1/2 segments in `all_labels/`. Combined with our ESRF fragments, this is 3× more diverse training data. This is the clearest path to a better model and a stronger Progress Prize submission.
+   - Use villa's `train_resnet3d.py` with ResNet3D-3D-decoder (better than our B1)
+   - Apply our BCE channel fix (`y[:,0,:,:]`) if the label format is 2-channel
+   - Compare val loss and >0.9 confidence against our B1 baseline
+
+3. **What is the path to getting Scroll 3 ink labels?**
+   No public ink labels exist for Scroll 3 (PHerc.332). Options:
+   - Community annotation of our segment 20240618142020 (we'd need to post predictions and ask for feedback)
+   - Use ThaumatoAnakalyptor to generate a flat segment, then apply our B1 model, then submit for annotation
+
+### Priority 2 — Architecture
+
+4. **villa's ResNet3D vs our Segformer-B1 — which is better for this data?**
+   villa's ResNet3D takes 3D surface volumes as input (20 layers × H × W). Our B1 takes the same format. On Scroll 1/2 segments (where ground truth exists) we can do a direct comparison.
+
+5. **Can we use villa's pre-trained checkpoints as a starting point?**
+   The community has released checkpoints — check the villa repo and Kaggle for Scroll 1/2 trained models. Fine-tuning from a good starting point is faster than training from scratch.

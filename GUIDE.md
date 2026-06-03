@@ -231,6 +231,15 @@ Two kinds of machines on it:
 
 So when you saw me "submit the triage job to l40," it means: *hand the 30-scroll scan to the supercomputer's queue to run on an L40-GPU machine.*
 
+### villa — the official codebase we build on
+
+**villa** (`github.com/ScrollPrize/villa`) is the official ScrollPrize code repository. It contains:
+- The **vesuvius Python package** — the proper way to load scroll volumes and segments. Instead of writing raw S3/zarr access code ourselves, we use `from vesuvius import Volume`.
+- **ink-detection training pipeline** — a more sophisticated model (ResNet3D + 3D decoder) and training setup than we built from scratch.
+- **Labeled training segments** — 15 Scroll 1/2 segments with confirmed ink annotations, far more data than we had before.
+
+villa is already cloned on Prajna at `~/scroll_prize/villa/`. Going forward, we use it as the foundation instead of reinventing things.
+
 ### Git, GitHub, and Discord
 
 - **Git** tracks every change to our files, with a full history (so nothing is ever truly lost and we can prove what we did when).
@@ -316,6 +325,8 @@ The honest, valuable position to aim for: *"I built and openly validated a tool,
 - **Git / GitHub** — change tracking / the public website hosting our code.
 - **Push** — upload latest changes to GitHub.
 - **Discord** — the community chat where findings (and our corrections) are posted.
+- **villa** — the official ScrollPrize codebase (`github.com/ScrollPrize/villa`); contains the vesuvius Python package, ink-detection training pipeline, and labeled training segments. Already cloned on Prajna.
+- **vesuvius (package)** — the Python library inside villa for loading scroll data; use `from vesuvius import Volume` instead of raw zarr/s3fs.
 - **First Letters / First Title / Progress Prize** — the three prizes; the Progress Prize (tool) is our realistic target.
 
 ---
