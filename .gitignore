@@ -1,0 +1,41 @@
+# Credentials — NEVER commit
+.env
+*.pt
+*.pth
+*.ckpt
+
+# Large data files
+data/
+results/scroll3_*.npy
+results/scroll3_*.png
+results/submission_*.png
+results/submission_*.npy
+results/analysis_*/
+results/clahe/
+results/deepzoom/
+results/highres/
+results/letter_hunt/
+results/unrolled/
+
+# Internal strategy / session notes
+AGENT.md
+BATTLE_PLAN.md
+PHASE*.md
+IMPROVEMENT_PLAN.md
+FINAL_STATUS.txt
+OVERNIGHT_SUMMARY.md
+TRAINING_SOLUTION.md
+WAKE_UP_GUIDE.md
+README_SLEEP_MODE.txt
+SLEEP_MODE_GUIDE.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Misc
+*.log
+.DS_Store
+scripts/__pycache__/
