@@ -141,13 +141,13 @@ Scanned all 35 scrolls with m7 surface-prediction zarrs at level-3 (~9.6 µm/px)
 | `infer_s3_esrf.py` | B1 inference on scroll segment | Active |
 | `prepare_esrf.py` | ESRF data prep | Active |
 | `prajna_lib.py` | SSH helper library | Active |
-| `positive_control.py` | Validates readout chain on any zarr | Active |
+| `positive_control.py` | Validates 3D readout chain on any zarr | Active |
 | `salvage_test.py` | Pareidolia controls for any candidate | Active |
-| `full_scroll_scan.py` | z-profile sweep of a scroll | Reference |
-| `inspect_zones.py` | Per-zone gradient comparison | Reference |
-| `r310_fullsearch.py` | Full gradient-gate scan (returns 0) | Reference |
-| `level0_letter_zoom.py` | 1.2 µm/px analysis | Reference |
-| `pherc9b_zoom.py` | PHerc0009B segment analysis | Reference |
+| `train_full.sh` | SLURM job script for training | Active |
+| `full_scroll_scan.py` | z-profile sweep of PHerc.332 m7 zarr (surface data, not ink) | Retracted-analysis reference |
+| `inspect_zones.py` | Per-zone gradient on PHerc.332 m7 zarr | Retracted-analysis reference |
+| `r310_fullsearch.py` | Full gradient-gate scan — produced the "0 validated" result | Retracted-analysis reference |
+| `level0_letter_zoom.py` | 1.2 µm/px zoom of the retracted candidate | Retracted-analysis reference |
 
 ---
 

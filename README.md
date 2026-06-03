@@ -122,19 +122,26 @@ python scripts/positive_control.py data/scroll3_ink_pred/level2/
 scripts/
 ├── train_full.py / ft_esrf_b1.py  ← BCE-fix training pipeline
 ├── infer_s3_esrf.py               ← B1 inference on scroll segment
-├── positive_control.py            ← validates the readout chain
+├── prepare_esrf.py / prajna_lib.py ← data prep + SSH helper
+├── positive_control.py            ← validates 3D readout chain
 ├── salvage_test.py                ← pareidolia controls
-├── full_scroll_scan.py            ← z-profile sweep
-├── inspect_zones.py               ← per-zone gradient comparison
-├── r310_fullsearch.py             ← full r=310 sweep (0 validated)
-└── level0_letter_zoom.py          ← 1.2 µm/px analysis
+│
+│   retracted-analysis reference (do not reuse as templates):
+├── full_scroll_scan.py            ← z-profile sweep of PHerc.332 m7 zarr
+├── inspect_zones.py               ← per-zone gradient (m7 surface data)
+├── r310_fullsearch.py             ← full sweep, validated 0 candidates
+└── level0_letter_zoom.py          ← 1.2 µm/px zoom of retracted candidate
 
 results/report/
-├── poscontrol_panel.png           ← positive control validation
+├── poscontrol_panel.png           ← positive control (truth | 2D | 3D)
 ├── salvage_panel.png              ← pareidolia controls
 ├── FINAL_DISCOVERY.png            ← PHerc.332 candidate (retracted)
-├── v9_l0_5radius.png              ← gradient at 1.2 µm/px
-└── v9_three_levels.png            ← 4.8/2.4/1.2 µm comparison
+├── v9_l0_5radius.png              ← gradient at 1.2 µm/px (retracted)
+└── v9_three_levels.png            ← resolution comparison (retracted)
+
+results/pherc0009b/
+├── p9b_labeled.png                ← labeled Π/Ο candidates (retracted)
+└── p9b_oval_zoom.png              ← 6× zoom (retracted)
 ```
 
 ---
