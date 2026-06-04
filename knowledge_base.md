@@ -48,6 +48,8 @@ CT scan → **segmentation/unwrapping** (trace the papyrus sheet in 3D, flatten 
 - **Current villa ink model:** ResNet3D + 3D decoder with **GroupDRO** (`train_resnet3d.py`) — the newer pipeline we should build on.
 - **Segmentation/unwrapping:** **VC3D** (volume-cartographer fork, Schilling & Johnson) — the team's approach as of Sept 2025; **spiral-fitting** (Henderson, fully automatic); **ThaumatoAnakalyptor** (Schilliger).
 
+> **Latest news / "what's happening now":** [`docs/news_and_status.md`](docs/news_and_status.md) — a dated snapshot from scrollprize.org + Substack. Headlines as of mid-2026: ink is now appearing in multiple new scrolls via a **generalist model + ~2 µm scans + curriculum learning**; **Scroll 139** is the key training set (an autoresearch agent ~2×'d Scroll 4 perf training only on 139); **3D ink detection** on unflattened volumes now matches 2.5D; ~70% of Scroll 5 is auto-unwrapped. This directly reshapes our next move (see that doc's "what this means for our project").
+
 ### What's wanted (the open frontier — and why our results look the way they do)
 From the Stage Two master plan: the 2023/24 ink models amplify signals that turn out to be **morphological cracks** or **metal-rich bright spots**. **These do not generalize** — "ink remains elusive in all our new data." The team is now hunting for *different* ink characteristics, and suspects that when ink is neither metal-rich nor cracked, **higher-resolution scans** are needed.
 
