@@ -579,6 +579,17 @@ Automate the unwrapping of an entire scroll to a quality sufficient for ink dete
 
 ## 12. Community Projects and Ecosystem
 
+> **Canonical, always-current list:** `awesome-scroll-tools` = `~/scroll_prize/villa/scrollprize.org/docs/20_community_projects.md` (GitHub: `ScrollPrize/villa/.../20_community_projects.md`). The Progress Prize form **requires a PR adding your tool there.** The tables below are a curated snapshot — check the canonical list before assuming a tool doesn't exist.
+>
+> **Recent / strategically-relevant additions (as of 2026-06-04):**
+> - **Scroll-specific augmentations** (pscamillo, PR #999) — Squeeze/Decohesion/Warp; **closes wishlist issue #201**, so that idea is taken.
+> - **ScrollMAE** (jgcarrasco) — 3D ResNet pretrain→finetune for ink; **DINO ink detection** (jgcarrasco, unsupervised, Colab); **DINOv2 models** (Pnev, pretrained on Scrolls 1-5).
+> - **3D ink detection** (Ryan Chesler) + **LSM** 3D U-Net; Sean Johnson's volumetric ink predictions (Scrolls 1-4).
+> - **Iterative labeling** (Youssef Nader) — the documented lever for improving ink predictions; **Inkalyzer** (Nader) — XAI + volumetric labels.
+> - **Vesuvius GP+** (Jared Landau) — GP ink script + extras; **VesuviusPretraining** (Nader) — the First-Letters pretrain→finetune recipe.
+> - **Ayush Mishra** — ink detection with rescaled fragments, Gabor-filter surface prediction, affinity-Unet segmentation.
+> - See `knowledge_base.md` §11 Priority 3 for which of our ideas are already done vs still open, and where our work is still differentiated.
+
 ### Data Access / Visualization
 
 | Tool | Author | Description |

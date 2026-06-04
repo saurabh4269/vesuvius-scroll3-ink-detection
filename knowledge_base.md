@@ -490,13 +490,24 @@ The retractions (§8) were **not** a data hoax — the data and code were always
 
 ### Priority 3 — Contribution options (preserved from the original strategy doc `docs/PLAN.md`)
 
-These are forward-looking ideas from the first strategy pass; the full prize wishlist is in `docs/vesuvius_challenge_reference.md` §18 (and the live list: villa GitHub issues labeled `help wanted` / `good first issue`).
+These are forward-looking ideas from the first strategy pass; the full prize wishlist is in `docs/vesuvius_challenge_reference.md` §18. **Before proposing any of these, check the full ecosystem list (§12 of the reference doc / the live `awesome-scroll-tools`) so you don't duplicate existing work — see the "already done" notes below.**
 
-6. **Knowledge distillation 2 µm → 9 µm** (potential Gold Aureus). Train a teacher on ESRF 2.2 µm fragments, distill into a student that runs on 9 µm scroll data (soft targets + feature distillation). Directly targets the documented generalization gap — the reason ink doesn't transfer to the newer lower-res scans. Compute: dgx (A100).
-7. **3D scroll-aware augmentations** (villa wishlist) — curvature/fiber/layer-topology-aware transforms + ablation. Sestertius–Denarius.
-8. **3D ink-label methodology** (villa wishlist) — volumetric labels vs today's 2D projections, using ESRF 2.2 µm. Could combine with distillation.
-9. **VC3D sheet-switch detection** — auto-detect/correct mesh jumping between adjacent layers; targets the unwrapping-at-scale bottleneck.
+6. **Knowledge distillation 2 µm → 9 µm** (potential Gold Aureus). Train a teacher on ESRF 2.2 µm fragments, distill into a student that runs on 9 µm scroll data. Targets the generalization gap. *Status: not obviously done by anyone yet — still open.* Compute: dgx (A100).
+7. ~~**3D scroll-aware augmentations**~~ — **ALREADY DONE.** pscamillo shipped scroll-specific augmentations (Squeeze/Decohesion/Warp) addressing issue #201 in villa PR #999. Do not propose this as novel. If anything, build on it.
+8. **3D ink-label methodology** (villa wishlist) — volumetric labels vs today's 2D projections. *Partly addressed:* Youssef Nader's Inkalyzer generates volumetric labels; James Darby has volumetric instance labels. Check overlap first.
+9. **VC3D sheet-switch detection** — auto-detect/correct mesh jumping between adjacent layers; targets the unwrapping bottleneck. Still appears open.
 
-**Data sources not yet used:** DLS fragments (Frag1–6, 3.24 µm, hand-labeled) and the EduceLab legacy fragments — additional ink ground truth beyond ESRF 500P2+343P. **Useful segment sizes:** Scroll 3 `20240618142020` = 33.5 cm² (6× the 4 cm² prize area); Scroll 2 `20240516205750` = 26 cm².
+**Data sources not yet used:** DLS fragments (Frag1–6, 3.24 µm, hand-labeled) and EduceLab legacy fragments — extra ink ground truth beyond ESRF 500P2+343P. **Useful segment sizes:** Scroll 3 `20240618142020` = 33.5 cm² (6× the 4 cm² prize area); Scroll 2 `20240516205750` = 26 cm².
 
-**What wins a Progress Prize** (from the official criteria): released early, *actually gets used* by the community, well documented, modular (standard formats: OME-Zarr, meshes). Infrastructure/tools tend to win over one-off results.
+**What wins a Progress Prize** (official criteria): released early, *actually gets used* by the community, well documented, modular (standard formats: OME-Zarr, meshes). Infrastructure/tools win over one-off results.
+
+### Existing ecosystem — what to build on, not reinvent (from `awesome-scroll-tools`, 2026-06-04)
+
+The canonical, always-current tool list is **`~/scroll_prize/villa/scrollprize.org/docs/20_community_projects.md`** (= GitHub `awesome-scroll-tools`; the form requires a PR adding your tool there). Tools most relevant to our ink-detection work:
+
+- **Ink detection (segment-based):** Grand Prize model (Nader/Farritor/Schilliger); **ScrollMAE** (jgcarrasco — 3D ResNet pretrain→finetune); **DINO ink detection** (jgcarrasco — unsupervised, Colab); **Vesuvius GP+** (Jared Landau — GP script + extras); **VesuviusPretraining** (Nader — pretrain-on-scroll→finetune-on-fragments, the First-Letters recipe); **DINOv2 models** (Pnev, pretrained on Scrolls 1-5); **Inkalyzer** (Nader — XAI + volumetric labels).
+- **3D ink (no segmentation):** Ryan Chesler's 3D ink model + **LSM** (3D U-Net pretrained on scroll data); Sean Johnson's volumetric ink predictions for Scrolls 1-4.
+- **Iterative labeling** (Nader) — the documented lever for improving ink predictions (matches the news recipe).
+- **Fragment ink-detection** baselines: 2.5D baseline (Tanaka), Ink-ID (Parsons), Kaggle top solutions; **ink detection with rescaled fragments** (Ayush Mishra).
+
+**Where our work still looks differentiated:** no existing entry is a *positive-control + pareidolia harness for validating that a readout/ink pipeline renders real ink vs CLAHE artifacts.* Closest are Inkalyzer (XAI) and ink-seer (feature t-SNE) — different purpose. So our hallucination-control angle is still reasonably novel; the BCE-fix is niche. **Strongest path remains:** build on ScrollMAE / VesuviusPretraining + villa's `train_resnet3d.py` with Scroll-139 2µm data + iterative labeling (the proven recipe), rather than a from-scratch tool.
