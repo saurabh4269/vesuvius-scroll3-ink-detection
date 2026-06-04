@@ -1,6 +1,6 @@
 # Knowledge Base — Scroll Prize
 
-Clean reference as of 2026-06-04. No evolutionary log — only verified facts.
+Clean reference as of 2026-06-04. Only verified facts. §5–6 (environment, errors) restored from the original operational log — they are the anti-repeat reference; keep appending to the §6 error table.
 
 ---
 
@@ -42,7 +42,23 @@ Output of segmentation (ThaumatoAnakalyptor / VolumeCartographer). A flattened 2
 2D outputs from ink detection models applied to segments. Our B1 model produces a 2D probability map for a given segment. These are not 3D volumes.
 
 ### ESRF Fragments
-Ground-truth ink-labeled fragments from ESRF synchrotron scans. Used as training data. Labels stored as `(H, W, 2)` tensors — channel 0 = ink mask, channel 1 = all-ones validity mask. **Only use channel 0 for training.**
+Ground-truth ink-labeled fragments from ESRF synchrotron scans. Used as training data. Only **500P2 + 343P** are usable public fragments (PHerc.9B has no surface/labels; PHerc1667Cr1Fr3 is only a JPEG photo, no scan).
+
+- Surface layers are **PNG not TIFF** (`tifffile` raises `TiffFileError: not a TIFF file b'\x89PNG'`). Use `PIL.Image.open`.
+- Ink labels are large (500P2 label = 27160×14990 ≈ 407M px). Set `Image.MAX_IMAGE_PIXELS = None` before opening or PIL raises `DecompressionBombError`.
+- **Raw label format on disk:** RGBA. Alpha is always 255 (useless). The **R channel (=G=B)** holds the signal: 0 = no ink, >0 = ink. Convert with `(R > 0)`. (An old DATA_EXPLORATION.md "28% ink" figure was wrong — real fractions: 500P2 = 4.1%, 343P = 3.4%.)
+- **As loaded by our DataModule:** labels become `(H, W, 2)` tensors — channel 0 = ink mask, channel 1 = all-ones validity mask. **Only use channel 0 for training** (see BCE fix in §7).
+- Dataset built: 13,873 patches (500P2) + 3,849 (343P) ≈ 3,276 training patches after sampling.
+
+### Scroll volume shapes (confirmed, level 0 / level 3)
+
+| Scroll | Level 0 (z×y×x) | Level 3 | Notes |
+|--------|------------------|---------|-------|
+| Scroll 1 | 14376×7888×8096 | 1797×986×1012 | Grand Prize scroll |
+| Scroll 2 | 14428×10112×11984 | 1804×1264×1498 | Scan artifact in centre |
+| Scroll 3 (PHerc.332) | 9778×3550×3400 | 1223×444×425 | First Letters target |
+
+Scroll 3 is low-contrast (mean intensity 44.9/255, peaks ≤159) — **CLAHE is essential** before any inference (clipLimit ≥ 2.0, tileGridSize 8×8). Scroll 1/2 **segments** are `(65, H, W)` at level 0 (see §3 for zarr URLs).
 
 ---
 
@@ -165,11 +181,76 @@ SSH: requires TOTP + password (2FA). ControlMaster: `~/.ssh/ctl/shiwani.mishra@p
 ~/scroll_prize/data/m7_triage/                 # level-3 of all 35 m7 zarrs (triage data)
 ```
 
-**PyTorch Lightning hangs on A40 + CUDA 12.8** — use manual training loop (`train_full.py`), not Lightning.
+**PyTorch Lightning hangs on A40 + CUDA 12.8** — use manual training loop (`train_full.py`), not Lightning. (Villa's pipeline uses Lightning and runs fine on `l40` — the hang is A40-specific.)
 
 ---
 
-## 5. Our Model — BCE Fix and Results
+## 5. Environment & Dependencies
+
+### Conda env `scroll` — verified working stack
+| Package | Version | Note |
+|---------|---------|------|
+| torch | **2.5.1+cu121** | Works on l40 (L40S, CUDA 12.8 driver 570.x) AND a40. Do NOT use cu130/cu124 builds (see below). |
+| transformers | 5.9.0 | Needs HF model cache pre-downloaded (no internet on compute nodes). |
+| vesuvius | 0.2.4 | Installed editable from `~/scroll_prize/villa/vesuvius` (NOT on PyPI). |
+| phoenix | 1.0 | Our training package, editable from `vesuvius_first_title_prize/`. |
+| zarr | 2.18.3 | Use `zarr.open_group(fsspec.get_mapper(url))` — stable across 2.x. |
+| segmentation_models_pytorch | 0.5.0 | villa loss functions (Dice, SoftBCE). |
+| s3fs | 2026.4.0 | For S3 — but most data is on `dl.ash2txt.org` (HTTP), not S3. |
+
+### CUDA / torch version trap (cost us a full day in May)
+- `torch 2.12.0+cu130` → `RuntimeError: NVIDIA driver too old (found 12080)`. Cluster driver is CUDA 12.8, not 13.0.
+- `pip install torch --index-url .../cu128` silently installs cu130 anyway → must pin: `pip install 'torch==2.5.1+cu121' --index-url https://download.pytorch.org/whl/cu121`.
+- cu124 builds have broken cuDNN for `Conv3d` on l40 → do not use. **Stick to 2.5.1+cu121.**
+- `torchaudio` with mismatched torch → import error. `pip uninstall torchaudio`.
+
+### Compute nodes have NO internet — pre-download everything on the login node
+- HuggingFace `from_pretrained('nvidia/mit-b1')` fails on compute nodes: `OSError: Can't load the model... [Errno -2] Name or service not known`.
+- **Fix:** pre-download the model on the login node once, then export in every job script:
+  ```bash
+  export HF_HUB_OFFLINE=1
+  export TRANSFORMERS_OFFLINE=1
+  export WANDB_MODE=disabled
+  ```
+- Same applies to any `requests`/`gdown`/`pip` call inside a SLURM job — they will all DNS-fail.
+
+### SLURM group quota
+- Group `medal` has `GrpSubmit=20` shared across **all** group users → `AssocGrpSubmitJobsLimit` even when your own queue is empty. Wait ~10 min and retry, or do lightweight work (pip, wget) on the login node.
+
+### SLURM job-script must-haves (learned the hard way)
+- `source ~/miniconda3/etc/profile.d/conda.sh` before `conda activate` (`.bashrc` is NOT sourced in jobs).
+- `set -eo pipefail` (NOT `-u` — it breaks conda activate).
+- `mkdir -p ~/logs` before sbatch (missing log dir = silent immediate failure, empty log).
+- `python -u` (unbuffered) or logs never flush before timeout.
+- `--qos` must exactly equal `--partition` or the job is rejected.
+
+---
+
+## 6. Errors Encountered & Fixes
+
+The clean-rewrite dropped this table; it is the single most useful anti-repeat reference. Keep appending.
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Name or service not known` (prajna.iitb.ac.in) | VPN not active | Connect IITB VPN |
+| `OSError: Can't load nvidia/mit-bN` in a job | Compute node has no internet; HF download fails | Pre-download on login node + `TRANSFORMERS_OFFLINE=1`/`HF_HUB_OFFLINE=1` |
+| `Local config not found!` / model init aborts in inference | Same HF-offline issue — `from_pretrained` of the Segformer backbone hits the network | Set offline env vars; verify backbone is in `~/.cache/huggingface` |
+| `RuntimeError: NVIDIA driver too old (12080)` | torch cu130 needs CUDA 13 driver | `pip install 'torch==2.5.1+cu121'` |
+| `cuDNN error: CUDNN_STATUS_NOT_INITIALIZED` (Conv3d) | cu124 cuDNN broken on l40 | Use 2.5.1+cu121 |
+| Lightning `trainer.fit()` hangs after preload | Lightning bug on a40+CUDA12.8; also `num_sanity_val_steps` deadlock on tiny val sets | Manual training loop (`train_full.py`); or `num_sanity_val_steps=0` |
+| Training "stuck" — no batch logs | stdout buffering | `python -u` |
+| `pip install vesuvius` → no distribution | Not on PyPI | `pip install -e ~/scroll_prize/villa/vesuvius` |
+| `TypeError: Volume.__init__() ... 'normalize'` | API has no `normalize` kwarg | Remove it |
+| `ValueError: URL not found in config for scroll=3` | Scroll 3 not in old scrolls.yaml | Use direct zarr URL (see §3) |
+| `TiffFileError: not a TIFF file b'\x89PNG'` | ESRF layers are PNG | `PIL.Image.open` not `tifffile` |
+| `PIL DecompressionBombError` | 407M-px ESRF label | `Image.MAX_IMAGE_PIXELS = None` |
+| `AssocGrpSubmitJobsLimit` | Group quota (20) shared | Wait + retry, or work on login node |
+| `Permission denied` on `/lustre-scratch/` | Not provisioned | Use `~/scroll_prize/results/` |
+| villa infer `KeyError: segment_id ... not found in metadata_json.segments` | Segment not in `metadata.json` | Pass `--layer_range start:end` (e.g. `1:63`) for external zarrs |
+
+---
+
+## 7. Our Model — BCE Fix and Results
 
 ### The bug (fixed 2026-05-31)
 BCE loss computed against both label channels on ESRF `(B, 2, H, W)` labels. Channel 1 is all-ones — training against it produces contradictory gradients, predictions saturate at 0.5.
@@ -194,11 +275,33 @@ Checkpoint: `~/scroll_prize/vesuvius_first_title_prize/checkpoints/ft_esrf_b1_20
 Config: `vesuvius_first_title_prize/configs/ft_esrf_b1.py`  
 Local prediction: `results/scroll3_prediction_B1_T0.3_BEST.npy`
 
-**B1 domain gap:** The B1 model produces a uniform 32px-period dot grid on segment 20240618142020 — these are papyrus fibers, not ink. The model has not been validated as a true ink detector on Scroll 3.
+### Full experiment trajectory (how we got to B1)
+
+| Model | Val loss | Scroll 3 >0.9 conf | Verdict |
+|-------|----------|--------------------|---------|
+| Baseline (pre-fix, broken 2-ch BCE) | 0.604* | ~0% | Predictions saturate at 0.5 |
+| TimeSformer zero-shot (Scroll 1 model) | — | noise | Domain shift — detects S3 fiber everywhere |
+| Transfer from TimeSformer weights | 0.612 | — | **Worse** — cross-domain transfer fails |
+| Offline augmentation (3×) | 0.613 | — | **Worse** — adds no new info (online aug already covers it) |
+| Fixed BCE, no pos_weight, 30ep | 0.634 | 0.00% | Class imbalance (91% no-ink) → defaults to "no ink" |
+| Fixed BCE + pos_weight=10, B3, 50ep | 1.635 | 5.86% | pos_weight makes it actually learn ink |
+| **Fixed BCE + pos_weight=10, B1, 50ep** | **1.631** | **5.93%** | **Best — smaller model overfits less** |
+
+*measured under the broken loss, not comparable to post-fix numbers (the fix changes the loss scale).
+
+**What did NOT work (don't retry these):**
+- **Transfer learning from TimeSformer** — it learned Scroll 1 ink (high-contrast crackle); ESRF is low-contrast surface topography. Different domains → degrades.
+- **Offline pre-augmentation** — `train_aug` already applies rotations/flips/noise online. Offline files just duplicate patches. The bottleneck is *new fragment data*, not more aug passes.
+- **More epochs (70) / bigger backbone (B3→79M)** — overfits 3,276 patches after ~50 epochs. B1 (45.6M) is near-optimal for this dataset size.
+- **Temperature scaling (T=0.2–0.3)** — sharpens the histogram for visualization but does NOT change which pixels are classified; not a real improvement.
+
+**The real bottleneck is data, not architecture.** 3,276 ESRF patches is too few. The clearest path forward is villa's 45 Scroll 1/2 labeled segments (see §3, §11).
+
+**B1 domain gap:** The B1 model produces a uniform 32px-period dot grid on segment 20240618142020 — these are papyrus fibers (~128 µm weave period = 32 px × 4 µm/px), not ink. The `>0.9 = 5.93%` metric reflects uniform texture detection, not ink. The model has NOT been validated as a true ink detector — that's exactly what `validate_b1_villa.py` is for (§11 Q1).
 
 ---
 
-## 6. What We Tried and What Happened
+## 8. What We Tried and What Happened
 
 ### PHerc.332 — cylindrical unrolling of m7 zarr
 
@@ -230,15 +333,18 @@ Scanned all 35 scrolls with m7 surface-prediction zarrs at level-3 (~9.6 µm/px)
 
 ---
 
-## 7. Active Scripts
+## 9. Active Scripts
 
 | Script | Purpose | Status |
 |--------|---------|--------|
 | `train_full.py` | Manual training loop (no Lightning) | Active |
 | `ft_esrf_b1.py` | B1 fine-tuning on ESRF | Active |
 | `infer_s3_esrf.py` | B1 inference on scroll segment | Active |
+| `validate_b1_villa.py` | Run B1 on a villa Scroll 1/2 labeled segment, report P/R/F1 vs ground truth | Active |
+| `validate_b1_villa.sh` | SLURM job (l40) for the above | Active |
+| `infer_villa_pretrained.sh` | Run villa's own pre-trained checkpoint on same segment for comparison | Active |
 | `prepare_esrf.py` | ESRF data prep | Active |
-| `prajna_lib.py` | SSH helper library | Active |
+| `prajna_lib.py` | SSH helper library (copy of the prajna-hpc skill lib) | Active |
 | `positive_control.py` | Validates 3D readout chain on any zarr | Active |
 | `salvage_test.py` | Pareidolia controls for any candidate | Active |
 | `train_full.sh` | SLURM job script for training | Active |
@@ -249,7 +355,7 @@ Scanned all 35 scrolls with m7 surface-prediction zarrs at level-3 (~9.6 µm/px)
 
 ---
 
-## 8. Progress Prize Submission
+## 10. Progress Prize Submission
 
 **Target:** Sestertius ($2,500) – Denarius ($10k)  
 **Primary contribution:** BCE loss fix (0% → 5.93% ink confidence)  
@@ -259,17 +365,17 @@ Scanned all 35 scrolls with m7 surface-prediction zarrs at level-3 (~9.6 µm/px)
 
 ---
 
-## 9. Open Questions
+## 11. Open Questions
 
 ### Priority 1 — Before next experiment
 
 1. **Does the B1 model actually detect ink or just papyrus fibers?**
-   The 32px dot grid on segment 20240618142020 is suspicious. Need to validate on a villa labeled segment (Scroll 1/2) where ground truth is known. If it fails there, the model is wrong; if it passes, Scroll 3 is just a harder case.
+   The 32px dot grid on segment 20240618142020 is suspicious. Validate on a villa labeled segment (Scroll 1/2) where ground truth is known via `validate_b1_villa.py`. If F1 < 0.05 there, the model is wrong; if F1 > 0.2, Scroll 3 is just a harder domain-gap case. **In progress** — first job failed on the HF-offline error (now documented §6); needs `TRANSFORMERS_OFFLINE=1` and resubmit.
 
 2. **Can we retrain using villa's Scroll 1/2 labels + ESRF fragments combined?**
-   Villa has 15 labeled Scroll 1/2 segments in `all_labels/`. Combined with our ESRF fragments, this is 3× more diverse training data. This is the clearest path to a better model and a stronger Progress Prize submission.
-   - Use villa's `train_resnet3d.py` with ResNet3D-3D-decoder (better than our B1)
-   - Apply our BCE channel fix (`y[:,0,:,:]`) if the label format is 2-channel
+   Villa has **45** labeled Scroll 1/2 segments in `all_labels/`. Combined with our ESRF fragments, this is far more diverse training data — the clearest path to a better model and a stronger Progress Prize submission.
+   - Use villa's `train_resnet3d.py` (ResNet3D + 3D decoder, Lightning → l40 partition)
+   - Note villa's loss is `0.5·Dice + 0.5·SoftBCE` (different from our BCE-only fix) — already handles class balance via Dice
    - Compare val loss and >0.9 confidence against our B1 baseline
 
 3. **What is the path to getting Scroll 3 ink labels?**
