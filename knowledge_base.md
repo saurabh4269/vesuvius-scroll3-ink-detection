@@ -29,7 +29,9 @@ Submission forms: First Letters/Title → Google Form on the prizes page; Progre
 
 ## 1b. Research Landscape — what's been done, what people use, what's wanted
 
-> Sourced from villa's bundled official docs (`~/scroll_prize/villa/scrollprize.org/docs/`: `34_prizes.md`, `27_master_plan.md`, `15_winners.md`, `22_firstletters.md`, `ink-detection/readme.md`, villa `README.md`). This is the authoritative outside context — verify against these, don't trust memory.
+> **Full reference already in-repo: [`docs/vesuvius_challenge_reference.md`](docs/vesuvius_challenge_reference.md)** — a 1088-line contributor compendium (history, milestones, every open problem, the complete prize structure + awarded-winner tables, all community tools, key people, master plan, formats, citations). This §1b is the *distilled, project-relevant* takeaway; go there for the full landscape.
+>
+> Both are cross-checked against villa's bundled official docs (`~/scroll_prize/villa/scrollprize.org/docs/`: `34_prizes.md`, `27_master_plan.md`, `15_winners.md`, `22_firstletters.md`). Authoritative outside context — verify against these, don't trust memory.
 
 ### The pipeline everyone works within
 CT scan → **segmentation/unwrapping** (trace the papyrus sheet in 3D, flatten to 2D) → **ink detection** (ML on the flattened surface volume) → papyrologist reads. The two unsolved problems are *unwrapping at scale* and *ink identification that generalizes*.
@@ -481,3 +483,16 @@ The retractions (§8) were **not** a data hoax — the data and code were always
 
 5. **Can we use villa's pre-trained checkpoints as a starting point?**
    The community has released checkpoints — check the villa repo and Kaggle for Scroll 1/2 trained models. Fine-tuning from a good starting point is faster than training from scratch.
+
+### Priority 3 — Contribution options (preserved from the original strategy doc `docs/PLAN.md`)
+
+These are forward-looking ideas from the first strategy pass; the full prize wishlist is in `docs/vesuvius_challenge_reference.md` §18 (and the live list: villa GitHub issues labeled `help wanted` / `good first issue`).
+
+6. **Knowledge distillation 2 µm → 9 µm** (potential Gold Aureus). Train a teacher on ESRF 2.2 µm fragments, distill into a student that runs on 9 µm scroll data (soft targets + feature distillation). Directly targets the documented generalization gap — the reason ink doesn't transfer to the newer lower-res scans. Compute: dgx (A100).
+7. **3D scroll-aware augmentations** (villa wishlist) — curvature/fiber/layer-topology-aware transforms + ablation. Sestertius–Denarius.
+8. **3D ink-label methodology** (villa wishlist) — volumetric labels vs today's 2D projections, using ESRF 2.2 µm. Could combine with distillation.
+9. **VC3D sheet-switch detection** — auto-detect/correct mesh jumping between adjacent layers; targets the unwrapping-at-scale bottleneck.
+
+**Data sources not yet used:** DLS fragments (Frag1–6, 3.24 µm, hand-labeled) and the EduceLab legacy fragments — additional ink ground truth beyond ESRF 500P2+343P. **Useful segment sizes:** Scroll 3 `20240618142020` = 33.5 cm² (6× the 4 cm² prize area); Scroll 2 `20240516205750` = 26 cm².
+
+**What wins a Progress Prize** (from the official criteria): released early, *actually gets used* by the community, well documented, modular (standard formats: OME-Zarr, meshes). Infrastructure/tools tend to win over one-off results.

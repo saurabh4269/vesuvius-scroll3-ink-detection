@@ -6,6 +6,16 @@
 
 > New to this project? Read **[GUIDE.md](GUIDE.md)** — plain-language walkthrough of what this is, how it works, and what we learned. No background assumed.
 
+### Documentation map
+
+| Doc | What's in it |
+|-----|--------------|
+| **[GUIDE.md](GUIDE.md)** | Plain-language walkthrough — the project, the data, what we learned, how to judge a finding. Start here. |
+| **[knowledge_base.md](knowledge_base.md)** | The working record — environment/error fixes, the model + BCE fix, what worked/didn't, failure-mode lessons, open questions. |
+| **[docs/vesuvius_challenge_reference.md](docs/vesuvius_challenge_reference.md)** | **Full research landscape** — history, milestones, every open problem, the complete prize structure + winners, all community tools, key people, master plan, formats, citations (1088 lines). |
+| **[PROGRESS_PRIZE_SUBMISSION.md](PROGRESS_PRIZE_SUBMISSION.md)** | Our Progress Prize write-up (BCE fix + controls methodology). |
+| `docs/PRAJNA_HPC.md`, `docs/PRAJNA_RUNBOOK.md` | Prajna HPC cluster reference (do not edit). |
+
 ---
 
 ## ⚠️ Read this first — two corrections

@@ -59,6 +59,8 @@ Also important: First Letters/Title submissions must be **programmatic outputs**
 
 **Why this matters for us:** our model was trained on that same crack/metal kind of signal, so when it sees Scroll 3 it mostly lights up on papyrus *fiber texture*, not ink. That's not just our bug — it's the wall the whole field is currently stuck at. So the valuable thing we can offer right now isn't "another letter claim," it's **honest, hallucination-proof tooling** — which is exactly what the Progress Prize rewards.
 
+> Want the full picture — every milestone, prize, tool, team member, and open problem? It's all in **[`docs/vesuvius_challenge_reference.md`](docs/vesuvius_challenge_reference.md)** (the complete contributor reference). This section is just the short version.
+
 ---
 
 ## Part 2 — The Data (what we're actually working with)

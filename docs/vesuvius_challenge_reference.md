@@ -6,6 +6,8 @@
 > Website: https://scrollprize.org  
 > Mailing list: https://scrollprize.substack.com  
 > Discord: https://discord.gg/V4fJhvtaQn  
+>
+> **This is the full research landscape — what's been done, what people use, what's wanted.** For the latest *verified* prize scope and our project-specific takeaways, see `knowledge_base.md` §1, §1b (re-checked June 2026 against villa's bundled official docs). Where this doc and `knowledge_base.md` differ on a fact, the knowledge base is the corrected one — e.g. First Letters **and** First Title are currently scoped to **Scrolls 2-3** per `34_prizes.md`.
 
 ---
 
