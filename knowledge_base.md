@@ -331,6 +331,30 @@ Local prediction: `results/scroll3_prediction_B1_T0.3_BEST.npy`
 
 Scanned all 35 scrolls with m7 surface-prediction zarrs at level-3 (~9.6 µm/px) using the cylindrical unrolling + gradient gate. 8 gated candidates, 3 survived shuffle filter, 0 matched the calibrated thin-shell profile. Since the data is surface predictions (not ink), these results describe scroll sheet geometry, not ink distribution.
 
+### What worked — validated tools & methods (keep using these)
+
+These were proven out over the project and are the durable, reusable wins:
+
+- **The BCE channel-0 fix + `pos_weight=10`** — the actual modeling win (§7). Slice labels to `y[:,0]`, weight the positive class for the 9% ink ratio.
+- **`positive_control.py`** — painted Π/Ο/Β/Φ on a synthetic cylindrical shell and recovered them through the full unroll→CLAHE pipeline. Proves a readout chain before trusting it on real data. Reusable on any zarr.
+- **Manual PyTorch training loop** (no Lightning) — sidesteps the a40 Lightning hang; full control over loss/checkpointing.
+- **CLAHE preprocessing** (clip 2.0, tile 8×8) — essential for low-contrast Scroll 3; the First Title winner's `contrasted=True` does the same.
+- **Patch-based inference with overlapping averaging** (patch 128, stride 128) — robust full-volume predictions, no OOM on A40.
+- **SLURM dependency chaining** (`--dependency=afterok:JOBID`) — ran a 3-phase pipeline overnight with zero intervention.
+- **ControlMaster + pyotp TOTP automation** — auth once, reuse the socket (now `prajna_lib.py`).
+- **Direct `zarr.open_group(fsspec.get_mapper(url))`** — more reliable than `vesuvius.Volume()` for anything not in `scrolls.yaml`; needs no auth.
+- **`gdown --folder`** for Google-Drive model weights; **nohup wget loop** on the login node for large multi-file segment downloads (65 TIFs, 7.7 GB); **BeautifulSoup** for `dl.ash2txt.org` directory listings.
+- **`PIL.Image.open` with `MAX_IMAGE_PIXELS = None`** for the large ESRF labels.
+
+### Timeline — what we did, dated
+
+- **2026-05-29 (Setup):** Prajna env + villa/First-Title repos cloned. Downloaded Scroll 3 segment 20240618142020 (65 TIFs, 7.7 GB). TimeSformer **zero-shot on Scroll 3 → uniform noise** (Scroll-1 model, domain shift). Decided to train MiniUNETR on ESRF 500P2+343P. Survived the torch-CUDA version trap (→ 2.5.1+cu121).
+- **2026-05-30 (Lightning hang):** Diagnosed `trainer.fit()` deadlock on a40 (not cuDNN/data/precision). Confirmed a manual loop runs cleanly.
+- **2026-05-31 (Baseline + the bug):** MiniUNETR baseline (20ep, val 0.604). **Found & fixed the 2-channel BCE bug.** Overnight SLURM chain ran Phase 1 ensemble, Phase 2 transfer (**failed**, 0.612), Phase 3 augmentation (**failed**, 0.613).
+- **2026-06-02:** Confirmed `pos_weight=10` fixes class imbalance. 50-ep B3 → val 1.635, Scroll 3 >0.9 = 5.86%.
+- **2026-06-03:** B1 backbone → val 1.631, >0.9 = **5.93% (best)**. Found the **B1 domain gap** (32px dot grid on Scroll 3 = fibers). Ran level-2/3 m7 zarr CLAHE "candidate" hunting (later retracted).
+- **2026-06-04 (Self-audit):** PHerc.332 candidate + PHerc0009B **both RETRACTED** (positive control + gradient gate; pareidolia). 35-scroll m7 triage → 0 calibrated hits. Discord posts corrected. **Discovered m7 = surface predictor, not ink.** Adopted villa as the research foundation.
+
 ---
 
 ## 9. Active Scripts
