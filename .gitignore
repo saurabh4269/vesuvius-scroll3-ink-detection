@@ -17,8 +17,9 @@ results/highres/
 results/letter_hunt/
 results/unrolled/
 
+# AGENT.md is committed — it's the agent handoff doc (no secrets; .env stays ignored)
+
 # Internal strategy / session notes
-AGENT.md
 BATTLE_PLAN.md
 PHASE*.md
 IMPROVEMENT_PLAN.md
