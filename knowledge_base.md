@@ -391,6 +391,39 @@ These were proven out over the project and are the durable, reusable wins:
 
 ---
 
+## 8b. Lessons & Failure Modes — claims, communication, PRs (don't repeat)
+
+The retractions (§8) were **not** a data hoax — the data and code were always real and public. The failure was **wording that outran the evidence**, and it cost credibility. These are the durable rules so it doesn't recur. This is the behavioral counterpart to the finding-evaluation toolkit in `GUIDE.md` Part 8.
+
+**Rule 1 — A public claim may never exceed what your own code outputs.** `r310_fullsearch.py` printed `Total raw: 10, deduped: 10, validated: 0` — the automated gradient filter rejected the very candidate we called "confirmed." We had leaned on hand-picked CLAHE images while our own quantitative test said no. Read your own script's output before posting; the claim is capped at what it reports.
+
+**Rule 2 — No "renders ink as letters" claim without a positive control.** Build `positive_control.py`-style proof that the method renders *known* ink as legible letters first. (Ours validated the readout chain — and showed real ink spikes at r=310 while our candidate peaked at r=298 and decayed outward = fiber signature.) The positive control is the line between "candidate" and "discovery."
+
+**Rule 3 — Always run the empty/shuffle control before claiming letters.** CLAHE manufactures letter-like marks from noise. PHerc0009B's Π/Ο were pareidolia (same pipeline → equally letter-like marks on empty regions); angle-shuffling the PHerc.332 window kept ~half the "blobs." If empty/shuffled data produces the same thing, you have nothing.
+
+**Rule 4 — Scope claims to what you actually searched.** "the only letter in the entire scroll" was really "the only one in the thin accessible shell at r=310" — saturated outer layers (r≥340) were never searchable. Never say "entire scroll / whole dataset" when you searched a slice.
+
+**Rule 5 — Use "candidate," not "confirmed." Letter IDs need a papyrologist.** β/φ and "carbonized ink" were interpretations. Default wording: "a candidate structure I find visually suggestive; could be a crack, fold, or fiber."
+
+### The overclaim → honest-version table (reference)
+| What we posted | What the evidence supported |
+|----------------|------------------------------|
+| "diagnostic signature of real carbonized ink" | "a structure with an ink-like radial profile I find visually suggestive" |
+| "the only letter-form structure across the entire scroll" | "the only one in the thin accessible shell at r=310 (outer layers saturated/unreadable)" |
+| "confirmed letter — β or φ" | "a candidate ~1 mm structure; reads as easily as a crack or fiber" |
+| "Π and Ο in raw CT" (PHerc0009B) | retracted — pareidolia; also likely an ink-render not raw CT, and not a prize-eligible scroll |
+
+### If you've already posted something wrong — the correction protocol
+1. **Self-correct fast, in the same thread.** Reaching the `validated: 0` honesty *before* someone else reruns your script is a credibility **gain**, not a loss.
+2. **Do NOT delete the original** — deletion looks worse than correcting.
+3. **Do NOT double down** or add new confident claims.
+4. **Don't post the next finding** until it has been through the same controls.
+5. Lead with "candidate, not confirmation; data + code public; happy to share coords for independent verification."
+
+**Rule 6 — Terminology must be verified against villa BEFORE any PR or public output.** We mislabeled the m7 zarrs "ink predictions" for weeks; they are **surface/sheet localization** predictions (§2). If a PR reaches `ScrollPrize/villa` (or a public post) with wrong terminology, the organizers flag it immediately and it looks worse than not posting. Before any PR or public claim, verify every technical term against villa's actual code/docs (`scrollprize.org/docs/`, the model READMEs). **Never open a PR without showing the full diff and getting explicit sign-off** (standing instruction).
+
+---
+
 ## 9. Active Scripts
 
 | Script | Purpose | Status |

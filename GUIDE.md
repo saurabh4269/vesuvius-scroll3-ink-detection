@@ -249,7 +249,7 @@ So when you saw me "submit the triage job to l40," it means: *hand the 30-scroll
 **villa** (`github.com/ScrollPrize/villa`) is the official ScrollPrize code repository. It contains:
 - The **vesuvius Python package** — the proper way to load scroll volumes and segments. Instead of writing raw S3/zarr access code ourselves, we use `from vesuvius import Volume`.
 - **ink-detection training pipeline** — a more sophisticated model (ResNet3D + 3D decoder) and training setup than we built from scratch.
-- **Labeled training segments** — 15 Scroll 1/2 segments with confirmed ink annotations, far more data than we had before.
+- **Labeled training segments** — 45 Scroll 1/2 segments with confirmed ink annotations, far more data than we had before.
 
 villa is already cloned on Prajna at `~/scroll_prize/villa/`. Going forward, we use it as the foundation instead of reinventing things.
 
@@ -292,6 +292,17 @@ You don't need to do the math; you need a **reliable gut for what's solid vs. sh
 - A **candidate** = "here's something interesting, not yet proven, please help check." Low risk, honest, community-friendly.
 - A **discovery** = "this is real, I've ruled out the alternatives." High bar. Only claim this after the controls pass.
 - Our whole correction was essentially **downgrading a "discovery" back to a "candidate."** That's normal science, not failure.
+
+### If you've already posted something and it turns out shaky
+This happened to us — here's the protocol that turned it into a credibility *gain* (full detail in `knowledge_base.md` §8b):
+1. **Correct fast, in the same thread** — before someone else reruns your script and finds the problem.
+2. **Don't delete the original** — that looks worse than owning it.
+3. **Don't double down** or add new confident claims.
+4. **Don't post the next finding** until it's passed the same controls (positive + empty/shuffle).
+5. A claim can **never exceed what your own code outputs** — if your automatic filter says `validated: 0`, you do not have a confirmation.
+
+### Before any PR or public post — verify terminology
+We called the m7 data "ink predictions" for weeks; it's actually a *surface/sheet locator*. If wrong terminology reaches a pull request to the official **villa** repo (or a public post), the organizers flag it instantly and it reads worse than not posting at all. So: **check every technical term against villa's own code/docs first, and never open a PR without showing the full change and getting an explicit go-ahead.**
 
 ### Realistic odds (so expectations are calibrated)
 - **First Letters / First Title ($60k each):** very hard. Requires 10 clear letters in a small area of a specific scroll. We have **zero** proven letters. This is a long shot and shouldn't drive day-to-day decisions.
