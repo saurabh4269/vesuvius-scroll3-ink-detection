@@ -10,14 +10,48 @@ Clean reference as of 2026-06-04. Only verified facts. §5–6 (environment, err
 
 | Prize | Amount | Requirement | Status |
 |-------|--------|-------------|--------|
-| First Letters — Scroll 3 (PHerc.332) | $60,000 | 10 readable letters in 4 cm² | Open, no winner |
-| First Title — Scroll 3 | $60,000 | Read the scroll's title | Open, no winner |
-| June Progress Prize (Gold Aureus) | $20,000 | Major tool/method adopted by community | **Jun 30, 2026 deadline** |
-| Denarius | $10,000 | Significant contribution | Jun 30 |
-| Sestertius | $2,500 | Notable contribution | Jun 30 |
+| First Letters | $60,000 | 10 legible letters in a single 4 cm² area of **any of Scrolls 2-3** | Open, no winner |
+| First Title | $60,000 | Produce a readable image of the title in **any of Scrolls 2-3** | Open, no winner |
+| Progress — Gold Aureus | $20,000 | Major contribution (tool/method adopted by community) | Monthly, rolling |
+| Progress — Denarius | $10,000 | Significant contribution | Monthly |
+| Progress — Sestertius | $2,500 | Notable contribution | Monthly |
+| Progress — Papyrus | $1,000 | Useful contribution | Monthly |
 
-Submission form: https://forms.gle/LrpQmSAqdwGpTczLA  
-Only Scroll 3 (PHerc.332) is prize-eligible for First Letters/Title — other scrolls don't qualify.
+Submission forms: First Letters/Title → Google Form on the prizes page; Progress → https://forms.gle/LrpQmSAqdwGpTczLA  
+**Correction (verified from official docs):** First Letters/Title are eligible on **Scrolls 2 AND 3** (PHerc.332 is Scroll 3; Scroll 2 = PHercParis3). Earlier notes saying "only Scroll 3" were wrong. Progress Prizes are evaluated **monthly** (rolling), not a single June 30 deadline — total awarded to date: **$1,781,500**.
+
+**First Letters/Title submission rules that constrain us (from `34_prizes.md`):**
+- Image must be a **programmatic output of CT data** — no manual character annotation, and the ink-model output region must NOT overlap any training data (prevents memorization).
+- **Hallucination mitigation is required** — they explicitly discourage window sizes > 0.5×0.5 mm (= 64×64 px at 8 µm). Larger windows may be rejected. Our positive-control + pareidolia methodology directly addresses this.
+- Include a 1 cm scale bar + the 3D position (segmentation ID). Do **not** go public before winning.
+
+---
+
+## 1b. Research Landscape — what's been done, what people use, what's wanted
+
+> Sourced from villa's bundled official docs (`~/scroll_prize/villa/scrollprize.org/docs/`: `34_prizes.md`, `27_master_plan.md`, `15_winners.md`, `22_firstletters.md`, `ink-detection/readme.md`, villa `README.md`). This is the authoritative outside context — verify against these, don't trust memory.
+
+### The pipeline everyone works within
+CT scan → **segmentation/unwrapping** (trace the papyrus sheet in 3D, flatten to 2D) → **ink detection** (ML on the flattened surface volume) → papyrologist reads. The two unsolved problems are *unwrapping at scale* and *ink identification that generalizes*.
+
+### What's been done (milestones)
+- **2023 Grand Prize ($850k):** first text from an unopened scroll (Scroll 1), by Youssef Nader, Luke Farritor, Julian Schilliger.
+- **The ink lineage:** Casey Handmer found the **"crackle pattern"** (ink looks like crackle in the CT) → Luke Farritor trained a model on crackle and read **ΠΟΡΦΥΡΑϹ** ("porphyras"/purple), winning First Letters → Youssef Nader added **domain transfer** (unsupervised pretraining on scroll data + fine-tune on Kaggle fragment labels, then iterative pseudo-labeling).
+- **2024:** words extracted from a *second* scroll; First Automated Segmentation ($60k).
+- **2025:** First Title ($60k) — author identified as **Philodemus of Gadara**. Focus shifted to scanning (ESRF BM18, 9.2 µm in <2 hr; 30+ scrolls scanned).
+- **March 2026:** Kaggle Surface Detection ($200k).
+
+### What people use (methods / tools)
+- **Ink detection (2023 GP winning solution, = our `villa/ink-detection/`):** ensemble of **TimeSformer-small** (divided space-time attention, the canonical model) + **ResNet3D-101** (pretrained) + **I3D** (non-local block + maxpooling); ~15 rounds of label cleaning. Stack: torch + lightning + timesformer-pytorch + 3D-ResNets-PyTorch.
+- **Current villa ink model:** ResNet3D + 3D decoder with **GroupDRO** (`train_resnet3d.py`) — the newer pipeline we should build on.
+- **Segmentation/unwrapping:** **VC3D** (volume-cartographer fork, Schilling & Johnson) — the team's approach as of Sept 2025; **spiral-fitting** (Henderson, fully automatic); **ThaumatoAnakalyptor** (Schilliger).
+
+### What's wanted (the open frontier — and why our results look the way they do)
+From the Stage Two master plan: the 2023/24 ink models amplify signals that turn out to be **morphological cracks** or **metal-rich bright spots**. **These do not generalize** — "ink remains elusive in all our new data." The team is now hunting for *different* ink characteristics, and suspects that when ink is neither metal-rich nor cracked, **higher-resolution scans** are needed.
+
+**This is the exact wall we hit:** our B1 (trained on ESRF crack/metal signal) produces only fiber texture on Scroll 3 (§7). It's not a bug in our model alone — it's the field-wide generalization gap. Implications for us:
+- Don't expect a crack/metal-trained model to "just work" on Scroll 3. Reproducing it on Scroll 1/2 (where that signal exists) is the honest validation (§11 Q1).
+- The genuinely valued contributions right now are **hallucination-safe methodology** and **tools that get used** (Progress Prize criteria) — which is where our positive-control/pareidolia work fits — not another retracted "letter" claim.
 
 ---
 

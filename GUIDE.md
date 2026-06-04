@@ -40,11 +40,24 @@ Now the challenge becomes a **software problem**, broken into three hard steps:
 
 | Prize | Amount | What it requires | Status |
 |-------|--------|------------------|--------|
-| **First Letters — Scroll 3** | **$60,000** | 10 readable letters in a 4 cm² area of scroll **PHerc.332** | Open, no winner |
-| **First Title — Scroll 3** | **$60,000** | Read the scroll's title | Open, no winner |
-| **June Progress Prize** (Gold Aureus) | **$20,000** | A *tool or method* the community adopts, OR a major contribution | Open, deadline ~June 30 |
+| **First Letters** | **$60,000** | 10 readable letters in one 4 cm² area of **any of Scrolls 2-3** | Open, no winner |
+| **First Title** | **$60,000** | A readable image of the title in **any of Scrolls 2-3** | Open, no winner |
+| **Progress Prizes** | **$1k–$20k** | A *tool or method* the community adopts/uses (Papyrus → Gold Aureus tiers) | Monthly, rolling |
 
-**Key point that affects our decisions:** the big $60k prizes are tied to **specific scrolls** (Scroll 2 and Scroll 3). A finding in some *other* scroll doesn't qualify for those. But the **Progress Prize rewards useful tools** regardless of scroll — and that's the realistic target for what we've built.
+**Key point that affects our decisions:** the big $60k prizes are tied to **specific scrolls** (Scroll 2 **and** Scroll 3 — both qualify, not just Scroll 3). A finding in some *other* scroll doesn't qualify for those. But the **Progress Prizes reward useful tools** regardless of scroll, are judged **every month**, and explicitly value work that is open-sourced early, actually gets used, and is well documented — that's the realistic target for what we've built.
+
+Also important: First Letters/Title submissions must be **programmatic outputs** (no hand-drawn letters), must **not** reuse training regions, and the judges **explicitly warn against window sizes bigger than 0.5×0.5 mm** because large windows let models hallucinate letters. Our pareidolia/positive-control checks exist precisely to satisfy this.
+
+### What others have already done, and what's still wanted
+
+(Grounded in the official Vesuvius docs that ship inside villa — not guesswork.)
+
+- **2023:** the $850k Grand Prize — the first text ever read from an unopened scroll (Scroll 1). The breakthrough chain: Casey Handmer spotted a **"crackle pattern"** in the scan that looks like ink → Luke Farritor trained an AI on it and read the word **ΠΟΡΦΥΡΑϹ** ("purple") → Youssef Nader improved it with *domain transfer* (pretrain on scroll, fine-tune on labeled fragments). Total prizes awarded across the project so far: ~$1.78M.
+- **2024–2025:** words found in a *second* scroll; the **title** of one scroll read (author: **Philodemus of Gadara**); focus moved to faster scanning (new ESRF beamline runs).
+- **The methods people use:** for ink, an ensemble of **TimeSformer** (a video-style transformer) + **3D ResNet** + **I3D** models; for unwrapping, tools called **VC3D**, **spiral-fitting**, and **ThaumatoAnakalyptor**. Villa (which we now build on) contains all of these.
+- **What's still wanted (the hard open problem):** the 2023/24 ink models learned to amplify **cracks** and **metal-rich bright spots** — and those signals **don't show up in the newer scrolls**. In the team's own words, "ink remains elusive in all our new data." They're now searching for *different* ink characteristics, possibly needing higher-resolution scans.
+
+**Why this matters for us:** our model was trained on that same crack/metal kind of signal, so when it sees Scroll 3 it mostly lights up on papyrus *fiber texture*, not ink. That's not just our bug — it's the wall the whole field is currently stuck at. So the valuable thing we can offer right now isn't "another letter claim," it's **honest, hallucination-proof tooling** — which is exactly what the Progress Prize rewards.
 
 ---
 

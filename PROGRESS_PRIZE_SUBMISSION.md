@@ -11,6 +11,10 @@
 
 A BCE loss fix that raises ink-detection confidence from 0% to 5.93% on Scroll 3, plus a documented methodology for validating 3D zarr readout pipelines with positive controls and pareidolia tests.
 
+### Why this is timely
+
+Per the Vesuvius Challenge master plan, the 2023/24 ink models amplify signals that correspond to morphological cracks or metal-rich bright spots, and these **do not generalize** to the newer scrolls — "ink remains elusive in all our new data." In that environment, the prize criteria for First Letters/Title explicitly require **hallucination mitigation** and warn against window sizes larger than 0.5×0.5 mm. Both contributions below are aimed squarely at that reality: a correctness fix in the training loss, and a reusable methodology for proving a readout pipeline isn't manufacturing letters from noise. We are not claiming a reading; we are contributing tooling that makes claims trustworthy.
+
 ---
 
 ## Contribution 1 — BCE loss fix (primary)
