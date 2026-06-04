@@ -1,7 +1,7 @@
 # Vesuvius Challenge — June 2026 Progress Prize Submission
 
 **GitHub:** https://github.com/saurabh4269/vesuvius-scroll3-ink-detection  
-**Submission form:** https://forms.gle/LrpQmSAqdwGpTczLA  
+**Submission form:** https://forms.gle/Sy6mW5cfJS2U7E9F7  
 **Target tier:** Sestertius ($2,500) – Denarius ($10k)  
 **Deadline:** June 30, 2026
 

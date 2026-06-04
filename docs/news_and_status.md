@@ -42,3 +42,25 @@ The news points clearly at what's working and what isn't — and our crack/metal
 7. **Tooling that gets used wins Progress Prizes** — Paul Geiger won a Papyrus ($1k) for a 3D viewer that got 70+ upvotes from competitors. Reinforces our "hallucination-safe, reusable tooling" angle over one-off claims.
 
 **Net recommendation:** the highest-leverage move is to stop polishing the ESRF-only 2D B1 and instead train on villa's Scroll-139 2 µm data (and the 45 labeled Scroll 1/2 segments) with a curriculum + iterative-labeling approach — ideally via villa's 3D `train_resnet3d.py`. That's aligned with exactly what the team reports is working.
+
+---
+
+## Live-site scrape — currency notes (2026-06-04)
+
+Direct scrape of `scrollprize.org` pages caught changes vs the villa doc clone. **These have been propagated into our docs.**
+
+- **⚠️ Progress Prize submission form CHANGED** → now **`https://forms.gle/Sy6mW5cfJS2U7E9F7`** (was `…/LrpQmSAqdwGpTczLA`). Verified verbatim from `/prizes` twice. Updated across AGENT.md, knowledge_base.md, PROGRESS_PRIZE_SUBMISSION.md, reference doc. **Submitting to the old form = missed submission.**
+- **Next Progress Prize deadline: June 30, 2026, 11:59pm Pacific** (~26 days out as of this snapshot). Monthly/rolling, but this is the next concrete cutoff for our submission.
+- **Milestone (First Letters/Title) form** (unchanged): `https://docs.google.com/forms/d/e/1FAIpQLSdw43FX_uPQwBTIV8pC2y0xkwZmu6GhrwxV4n3WEbqC8Xof9Q/viewform`. Confirmed **First Letters AND First Title = Scrolls 2-3**.
+- **Discord invite** is now **`https://discord.com/invite/uTfNwwecCQ`** (site nav still shows the old `discord.gg/V4fJhvtaQn`). Updated in the reference doc.
+- **"Unwrapping at Scale $200k" no longer appears on the live `/prizes` page.** The $200k now reads as the **concluded** Kaggle Surface Detection competition (winners announced March 2026). Treat a *standing* Unwrapping-at-Scale prize as **unconfirmed** — verify before relying on it. (The landing page and older docs still mention it.)
+- **Jobs:** no open roles right now; speculative applications to `jobs@scrollprize.org`.
+
+### Onboarding / how-to quickstart (from get-started, segmentation & ink tutorials)
+
+For any agent that needs to actually run the pipeline:
+
+- **Look inside a scroll:** browser `https://dl.ash2txt.org/view/Scroll1`, or `pip install vesuvius` then `vesuvius.Volume('Scroll1')` (Python) / `vesuvius-c` (C).
+- **Ink detection starting points:** the high-level tutorial (`/tutorial5`) → hands-on Kaggle notebook (`kaggle.com/code/jpposma/vesuvius-challenge-ink-detection-tutorial`) and the current Colab `ScrollPrize/vesuvius/notebooks/example2_ink_detection.ipynb`. Train on fragments (IR-photo ground truth) → domain-adapt to scroll surface volumes.
+- **Segmentation / VC3D:** `docker pull ghcr.io/scrollprize/villa/volume-cartographer:edge`. Data must be **OME-Zarr, uint8, with a `meta.json` containing `"format":"zarr"`** (check `.zarray` dtype: `|u1`=uint8, `|u2`=uint16). Gotcha: raise the open-file limit first — `ulimit -Sn 750000`.
+- **Four contribution tracks** (get-started): Surface Detection (Kaggle), Segmentation (→ `/unwrapping`, `/segmentation`), Ink Detection (→ `/tutorial5`; the 7×$60k prizes), Open-Source Tools (→ `/community_projects` + the Progress wishlist).

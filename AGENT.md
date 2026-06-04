@@ -33,7 +33,7 @@ Read in this order depending on what you need. **Don't duplicate these — updat
 
 The Vesuvius Challenge reads ~2,000-year-old carbonized scrolls via CT + ML. Pipeline: **scan → segment/unwrap the papyrus sheet → flatten → detect ink (ML) → papyrologist reads.** We focus on **ink detection** for **Scroll 3 (PHerc.332)** and on reusable tooling.
 
-Open prizes (verified, see `knowledge_base.md` §1): **First Letters / First Title — 7 × $60,000** (Scrolls 2-3), **Unwrapping at Scale — $200,000**, **Monthly Progress Prizes — $1k–$20k** (our realistic target).
+Open prizes (verified 2026-06-04, see `knowledge_base.md` §1 + `docs/news_and_status.md`): **First Letters / First Title — 7 × $60,000** (Scrolls 2-3), **Monthly Progress Prizes — $1k–$20k** (our realistic target; **next deadline June 30, 2026**, form `https://forms.gle/Sy6mW5cfJS2U7E9F7`). A standing **Unwrapping at Scale — $200,000** is no longer listed on the live `/prizes` page (the $200k now reads as the concluded Kaggle Surface Detection) — treat as unconfirmed.
 
 ---
 
@@ -138,7 +138,7 @@ Full detail + the overclaim→honest-version table: `knowledge_base.md` §8b and
    - `scripts/infer_villa_pretrained.sh` (was job 127871) — failed: segment not in `metadata.json`. **Fix:** add `--layer_range 1:63`.
    These answer the open question "does our B1 detect ink or just fiber?" — validate on a villa labeled Scroll 1/2 segment where ground truth exists.
 2. **Then** decide on the strategic pivot in §5 (villa 3D pipeline + Scroll 139 + curriculum).
-3. Progress Prize submission (`PROGRESS_PRIZE_SUBMISSION.md`) — monthly deadline, form `https://forms.gle/LrpQmSAqdwGpTczLA`.
+3. Progress Prize submission (`PROGRESS_PRIZE_SUBMISSION.md`) — monthly deadline, form `https://forms.gle/Sy6mW5cfJS2U7E9F7`.
 
 ---
 

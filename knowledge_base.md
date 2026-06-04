@@ -17,7 +17,7 @@ Clean reference as of 2026-06-04. Only verified facts. §5–6 (environment, err
 | Progress — Sestertius | $2,500 | Notable contribution | Monthly |
 | Progress — Papyrus | $1,000 | Useful contribution | Monthly |
 
-Submission forms: First Letters/Title → Google Form on the prizes page; Progress → https://forms.gle/LrpQmSAqdwGpTczLA  
+Submission forms: First Letters/Title → Google Form on the prizes page; Progress → https://forms.gle/Sy6mW5cfJS2U7E9F7  
 **Correction (verified from official docs):** First Letters/Title are eligible on **Scrolls 2 AND 3** (PHerc.332 is Scroll 3; Scroll 2 = PHercParis3). Earlier notes saying "only Scroll 3" were wrong. Progress Prizes are evaluated **monthly** (rolling), not a single June 30 deadline — total awarded to date: **$1,781,500**.
 
 **First Letters/Title submission rules that constrain us (from `34_prizes.md`):**
@@ -456,7 +456,7 @@ The retractions (§8) were **not** a data hoax — the data and code were always
 **Primary contribution:** BCE loss fix (0% → 5.93% ink confidence)  
 **Secondary:** positive control + pareidolia control methodology  
 **File:** `PROGRESS_PRIZE_SUBMISSION.md`  
-**Submit by:** June 30, 2026 at https://forms.gle/LrpQmSAqdwGpTczLA
+**Submit by:** June 30, 2026 at https://forms.gle/Sy6mW5cfJS2U7E9F7
 
 ---
 

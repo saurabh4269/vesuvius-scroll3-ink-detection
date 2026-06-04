@@ -5,7 +5,7 @@
 > Primary repo: https://github.com/ScrollPrize/villa  
 > Website: https://scrollprize.org  
 > Mailing list: https://scrollprize.substack.com  
-> Discord: https://discord.gg/V4fJhvtaQn  
+> Discord: https://discord.com/invite/uTfNwwecCQ  
 >
 > **This is the full research landscape — what's been done, what people use, what's wanted.** For the latest *verified* prize scope and our project-specific takeaways, see `knowledge_base.md` §1, §1b (re-checked June 2026 against villa's bundled official docs). Where this doc and `knowledge_base.md` differ on a fact, the knowledge base is the corrected one — e.g. First Letters **and** First Title are currently scoped to **Scrolls 2-3** per `34_prizes.md`.
 
@@ -182,7 +182,7 @@ Even with good representations, constructing the actual mesh and flattening it i
   - **Papyrus:** $1,000 (~50/year)
 - Favored: released early, actually used by community, well documented
 - Submission deadline: 11:59pm Pacific, last day of each month
-- Submission form: https://forms.gle/LrpQmSAqdwGpTczLA
+- Submission form: https://forms.gle/Sy6mW5cfJS2U7E9F7
 
 #### Unwrapping at Scale Prize — $200,000
 - Automate virtual unwrapping of entire scrolls
@@ -807,7 +807,7 @@ Automate the unwrapping of an entire scroll to a quality sufficient for ink dete
 
 ### Step 1: Join the Community
 
-- Discord: https://discord.gg/V4fJhvtaQn (primary collaboration channel)
+- Discord: https://discord.com/invite/uTfNwwecCQ (primary collaboration channel)
 - Substack (mailing list): https://scrollprize.substack.com
 - Twitter/X: https://x.com/scrollprize
 - Community survey: https://forms.gle/mtA3B4uQusVFTEDu9
@@ -850,7 +850,7 @@ python -c "import vesuvius; v = vesuvius.Volume('Scroll1'); print(v[1000].shape)
 
 ### Step 4: Submit
 
-- **Progress Prizes:** https://forms.gle/LrpQmSAqdwGpTczLA
+- **Progress Prizes:** https://forms.gle/Sy6mW5cfJS2U7E9F7
 - **First Letters/Title:** https://docs.google.com/forms/d/e/1FAIpQLSdw43FX_uPQwBTIV8pC2y0xkwZmu6GhrwxV4n3WEbqC8Xof9Q/viewform
 
 ### Step 5: Open Source
@@ -1069,7 +1069,7 @@ Main repo:
   git clone https://github.com/ScrollPrize/villa
 
 Submit progress prize:
-  https://forms.gle/LrpQmSAqdwGpTczLA  (deadline: last day of each month)
+  https://forms.gle/Sy6mW5cfJS2U7E9F7  (deadline: last day of each month)
 
 Submit First Letters/Title:
   https://docs.google.com/forms/d/e/1FAIpQLSdw43FX.../viewform
@@ -1085,6 +1085,6 @@ Current prize targets:
   - $200k: Unwrapping at Scale
   - $1k–$20k/month: Progress Prizes
 
-Community: Discord https://discord.gg/V4fJhvtaQn
+Community: Discord https://discord.com/invite/uTfNwwecCQ
 Updates: https://scrollprize.substack.com
 ```
