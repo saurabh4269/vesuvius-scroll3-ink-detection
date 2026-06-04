@@ -138,7 +138,7 @@ Full detail + the overclaim→honest-version table: `knowledge_base.md` §8b and
    - `scripts/infer_villa_pretrained.sh` (was job 127871) — failed: segment not in `metadata.json`. **Fix:** add `--layer_range 1:63`.
    These answer the open question "does our B1 detect ink or just fiber?" — validate on a villa labeled Scroll 1/2 segment where ground truth exists.
 2. **Then** decide on the strategic pivot in §5 (villa 3D pipeline + Scroll 139 + curriculum).
-3. Progress Prize submission (`PROGRESS_PRIZE_SUBMISSION.md`) — monthly deadline, form `https://forms.gle/Sy6mW5cfJS2U7E9F7`.
+3. **Progress Prize submission** (`PROGRESS_PRIZE_SUBMISSION.md`) — deadline **June 30, 2026**, form `https://forms.gle/Sy6mW5cfJS2U7E9F7`, account `saurabhgupta0342@gmail.com`. Field answers **drafted, not submitted**; the required `awesome-scroll-tools` PR is **drafted, not opened** (needs sign-off). Realistic tier: Papyrus–Sestertius. See that doc's "Submission form — field-by-field".
 
 ---
 

@@ -452,11 +452,13 @@ The retractions (§8) were **not** a data hoax — the data and code were always
 
 ## 10. Progress Prize Submission
 
-**Target:** Sestertius ($2,500) – Denarius ($10k)  
+**Realistic tier:** Papyrus ($1,000) – Sestertius ($2,500). *Honest read: not higher — the prize weights community adoption and the repo has no users yet. (Earlier "Sestertius–Denarius" was optimistic.)*  
 **Primary contribution:** BCE loss fix (0% → 5.93% ink confidence)  
 **Secondary:** positive control + pareidolia control methodology  
-**File:** `PROGRESS_PRIZE_SUBMISSION.md`  
-**Submit by:** June 30, 2026 at https://forms.gle/Sy6mW5cfJS2U7E9F7
+**File:** `PROGRESS_PRIZE_SUBMISSION.md` — full field-by-field draft answers + the required `awesome-scroll-tools` PR entry + tier assessment are there.  
+**Submitting account:** saurabhgupta0342@gmail.com  
+**Submit by:** June 30, 2026, 11:59pm Pacific at https://forms.gle/Sy6mW5cfJS2U7E9F7  
+**Status:** form answers drafted, **not submitted**; `awesome-scroll-tools` PR drafted, **not opened** (awaiting sign-off per the no-PR-without-approval rule, §8b Rule 5).
 
 ---
 

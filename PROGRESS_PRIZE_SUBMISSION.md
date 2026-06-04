@@ -1,9 +1,11 @@
 # Vesuvius Challenge — June 2026 Progress Prize Submission
 
 **GitHub:** https://github.com/saurabh4269/vesuvius-scroll3-ink-detection  
-**Submission form:** https://forms.gle/Sy6mW5cfJS2U7E9F7  
-**Target tier:** Sestertius ($2,500) – Denarius ($10k)  
-**Deadline:** June 30, 2026
+**Submission form:** https://forms.gle/Sy6mW5cfJS2U7E9F7 (verified live 2026-06-04; the old `…/LrpQmSAqdwGpTczLA` is dead)  
+**Submitting account:** saurabhgupta0342@gmail.com  
+**Realistic tier:** Papyrus ($1,000) – Sestertius ($2,500). *Honest read — see "Tier assessment" below; not higher, because the prize weights community adoption and the repo has no users yet.*  
+**Deadline:** June 30, 2026, 11:59pm Pacific (monthly/rolling)  
+**Form also requires:** a PR to `awesome-scroll-tools` (`scrollprize.org/docs/20_community_projects.md`) linking the contribution.
 
 ---
 
@@ -97,3 +99,44 @@ All scripts are in `scripts/`. Key files:
 | `r310_fullsearch.py` | Full gradient-gate scan (returns 0 — the honest result) |
 
 MIT licensed.
+
+---
+
+## Submission form — field-by-field (June 2026 cycle)
+
+The Google Form (`forms.gle/Sy6mW5cfJS2U7E9F7`) asks for these. Drafted answers below; **not yet submitted.**
+
+| Field | Answer |
+|-------|--------|
+| **Email** | saurabhgupta0342@gmail.com |
+| **Full name** | Saurabh Gupta *(confirm the name that should receive the prize)* |
+| **Team description** | Submitting as an individual. *(Prajna compute is under `shiwani.mishra` — add as collaborator if she should be credited.)* |
+| **Contribution URL** | https://github.com/saurabh4269/vesuvius-scroll3-ink-detection (MIT) |
+| **`awesome-scroll-tools` PR** | Required — see entry below. **Status: not yet opened** (awaiting sign-off per our no-PR-without-approval rule). |
+| **Terms & Conditions** | Yes, agree (must open-source the method to accept — already MIT). |
+
+**Description field — "how this substantially increases the probability of reading complete scrolls" (honest version):**
+
+> Two open-source pieces:
+> **(1) A silent training-loss bug fix** — on ESRF-format fragment labels (2-channel: ink mask + all-ones validity mask), BCE against both channels gives contradictory gradients that cap predictions near 0.5; the model looks converged but is useless. Slicing to the ink channel + `pos_weight=10` raised >0.9-confidence predictions 0% → ~6%. Documenting it saves contributors weeks on a silent failure.
+> **(2) A reusable hallucination-control harness** — a positive control (paints known Greek letters on a synthetic shell, runs the identical pipeline to prove it renders real ink as legible letters) + pareidolia controls (empty-region + angle-shuffle). Directly addresses the prize's explicit hallucination-mitigation requirement. Applied to my own candidate, they correctly rejected it before any external review.
+> **Honest scope:** correctness + verification tooling, not a scroll reading. Raises the probability of reading scrolls *indirectly* — fewer silently-broken models, fewer false-positive "letter" claims wasting reviewer/papyrologist time.
+
+### Required PR entry for `awesome-scroll-tools`
+
+To be added under **Ink Detection → 🖋️ Scroll segments-based Ink Detection → ⚙️ Tools** in `scrollprize.org/docs/20_community_projects.md`:
+
+```markdown
+- [vesuvius-scroll3-ink-detection](https://github.com/saurabh4269/vesuvius-scroll3-ink-detection):
+  Tooling for *trustworthy* ink detection — a positive-control + pareidolia-control harness to
+  test whether a CLAHE/zarr readout pipeline renders real ink vs. artifacts, plus a documented
+  fix for a silent BCE-loss bug when training on 2-channel ESRF fragment labels. By Saurabh Gupta.
+```
+
+Terminology checked: no "m7 ink predictions", no "confirmed letters".
+
+### Tier assessment (honest)
+
+- **Realistic: Papyrus ($1k), possibly Sestertius ($2.5k).** Not higher.
+- **Weakest criterion: "actually gets used."** The prize heavily weights community adoption (questions, bug reports, the annotation team using it). The repo is new with no users yet. The BCE fix is real but niche (that exact ESRF 2-channel setup); the control harness is well-aligned with the stated hallucination concern but is a small script set.
+- **Two paths before June 30:** (1) submit now — clean, modest, honest; or (2) strengthen first — run the villa-based validation/retrain on labeled data for an actual *result*, and/or package the control harness as a `pip install`-able CLI so it's genuinely usable. ~26 days available.
